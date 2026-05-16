@@ -1,0 +1,70 @@
+{
+  "designs": [
+    {
+      "id": "sample-001",
+      "title": "Royal Gold Wedding Mandap",
+      "category": "Wedding",
+      "description": "A grand golden mandap with floral drapes, crystal chandeliers and royal throne chairs. Perfect for a regal South Indian wedding ceremony.",
+      "price": "₹35,000 onwards",
+      "tags": ["mandap", "gold", "floral", "royal", "chandelier"],
+      "images": [],
+      "featured": true,
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "sample-002",
+      "title": "Pastel Balloon Birthday Setup",
+      "category": "Birthday",
+      "description": "A soft pastel balloon arch with customized name board, photo backdrop and cake table decoration. Great for kids and adults alike.",
+      "price": "₹8,000 onwards",
+      "tags": ["balloons", "pastel", "arch", "backdrop", "birthday"],
+      "images": [],
+      "featured": false,
+      "createdAt": "2026-01-02T00:00:00.000Z"
+    },
+    {
+      "id": "sample-003",
+      "title": "Pink Dream Baby Shower",
+      "category": "Baby Shower",
+      "description": "A dreamy pink and white baby shower setup with balloon canopy, flower wall and customized welcome board.",
+      "price": "₹12,000 onwards",
+      "tags": ["pink", "balloons", "flower wall", "baby", "pastel"],
+      "images": [],
+      "featured": true,
+      "createdAt": "2026-01-03T00:00:00.000Z"
+    },
+    {
+      "id": "sample-004",
+      "title": "Traditional Puberty Ceremony",
+      "category": "Puberty Function",
+      "description": "Traditional South Indian puberty function setup with banana leaf decoration, flower garlands, traditional kolam and sacred ambiance.",
+      "price": "₹15,000 onwards",
+      "tags": ["traditional", "flowers", "garland", "south indian", "sacred"],
+      "images": [],
+      "featured": false,
+      "createdAt": "2026-01-04T00:00:00.000Z"
+    },
+    {
+      "id": "sample-005",
+      "title": "Midnight Surprise Party",
+      "category": "Surprise Party",
+      "description": "A dramatic midnight-themed surprise party with black and gold balloons, fairy lights and a special entrance curtain effect.",
+      "price": "₹10,000 onwards",
+      "tags": ["midnight", "black gold", "fairy lights", "surprise", "dramatic"],
+      "images": [],
+      "featured": false,
+      "createdAt": "2026-01-05T00:00:00.000Z"
+    },
+    {
+      "id": "sample-006",
+      "title": "Rose Gold Engagement Setup",
+      "category": "Engagement",
+      "description": "An elegant rose gold engagement backdrop with fresh roses, couple initials and a romantic candlelight ambiance.",
+      "price": "₹20,000 onwards",
+      "tags": ["rose gold", "roses", "romantic", "candlelight", "elegant"],
+      "images": [],
+      "featured": true,
+      "createdAt": "2026-01-06T00:00:00.000Z"
+    }
+  ]
+}
