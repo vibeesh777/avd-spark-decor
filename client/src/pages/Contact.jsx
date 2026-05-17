@@ -45,7 +45,7 @@ export default function Contact() {
           <div className="contact-cards">
             {[
               { icon: '📞', label: 'Call / WhatsApp', value: '+91 93842 17626', link: 'tel :+91 93842 17626' },
-              { icon: '✉️', label: 'Email', value: 'avdsparkdecor@gmail.com', link: 'mailto:avdsparkdecor@gmail.com' },
+              { icon: '✉️', label: 'Email', value: 'kingvibeeshraja@gmail.com', link: 'mailto:kingvibeeshraja@gmail.com' },
               { icon: '📍', label: 'Location', value: 'perambalur, Tamil Nadu', link: null },
               { icon: '⏰', label: 'Working Hours', value: 'Mon – Sun, everytime', link: null },
             ].map(c => (

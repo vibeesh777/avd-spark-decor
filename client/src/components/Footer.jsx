@@ -37,9 +37,9 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Contact</h4>
             <ul className="contact-list">
-              <li>📍 Chennai, Tamil Nadu</li>
-              <li>📞 <a href="tel:+919876543210">+91 98765 43210</a></li>
-              <li>✉️ <a href="mailto:avdsparkdecor@gmail.com">avdsparkdecor@gmail.com</a></li>
+              <li>📍 perambalur, Tamil Nadu</li>
+              <li>📞 <a href="tel:+9193842 17626">91 93842 17626 </a></li>
+              <li>✉️ <a href="mailto:kingvibeeshraja@gmail.com">kingvibeeshraja@gmail.com</a></li>
               <li>⏰ Mon – Sun, 9am – 8pm</li>
             </ul>
           </div>
