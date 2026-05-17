@@ -8,17 +8,27 @@ const { verifyAdmin } = require('../middleware/auth');
 
 const DATA_FILE = path.join(__dirname, '../data/designs.json');
 
-// Ensure data file exists
-if (!fs.existsSync(DATA_FILE)) {
+// Ensure data file exists (skip on Vercel — read-only filesystem)
+if (process.env.VERCEL !== '1' && !fs.existsSync(DATA_FILE)) {
   fs.writeJsonSync(DATA_FILE, { designs: [] });
 }
 
-const getDesigns = () => fs.readJsonSync(DATA_FILE).designs;
-const saveDesigns = (designs) => fs.writeJsonSync(DATA_FILE, { designs });
+const getDesigns = () => {
+  try {
+    return fs.readJsonSync(DATA_FILE).designs;
+  } catch {
+    return [];
+  }
+};
+const saveDesigns = (designs) => {
+  if (process.env.VERCEL === '1') return;
+  fs.writeJsonSync(DATA_FILE, { designs });
+};
 
-// Multer storage config
+// Multer storage config (use /tmp on Vercel since filesystem is read-only)
+const uploadsDir = process.env.VERCEL === '1' ? '/tmp' : path.join(__dirname, '../uploads');
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `design_${uuidv4()}${ext}`);

@@ -1,8 +1,0 @@
-// Simple health check endpoint to test if serverless functions work
-module.exports = (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'API is working!',
-    timestamp: new Date().toISOString()
-  });
-};

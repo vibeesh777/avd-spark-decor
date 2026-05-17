@@ -7,12 +7,21 @@ const nodemailer = require('nodemailer');
 const { verifyAdmin } = require('../middleware/auth');
 
 const DATA_FILE = path.join(__dirname, '../data/requests.json');
-if (!fs.existsSync(DATA_FILE)) {
+if (process.env.VERCEL !== '1' && !fs.existsSync(DATA_FILE)) {
   fs.writeJsonSync(DATA_FILE, { requests: [] });
 }
 
-const getRequests = () => fs.readJsonSync(DATA_FILE).requests;
-const saveRequests = (requests) => fs.writeJsonSync(DATA_FILE, { requests });
+const getRequests = () => {
+  try {
+    return fs.readJsonSync(DATA_FILE).requests;
+  } catch {
+    return [];
+  }
+};
+const saveRequests = (requests) => {
+  if (process.env.VERCEL === '1') return;
+  fs.writeJsonSync(DATA_FILE, { requests });
+};
 
 // Email transporter
 const createTransporter = () => nodemailer.createTransport({
