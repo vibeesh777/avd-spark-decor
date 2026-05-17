@@ -7,9 +7,11 @@ const fs = require('fs-extra');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Ensure data directories exist
-fs.ensureDirSync(path.join(__dirname, 'data'));
-fs.ensureDirSync(path.join(__dirname, 'uploads'));
+// Ensure data directories exist (skip on Vercel — read-only filesystem)
+if (process.env.VERCEL !== '1') {
+  fs.ensureDirSync(path.join(__dirname, 'data'));
+  fs.ensureDirSync(path.join(__dirname, 'uploads'));
+}
 
 // Middleware — allow all origins in production (Vercel), restrict in dev
 app.use(cors({
