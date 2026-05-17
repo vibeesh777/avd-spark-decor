@@ -13,8 +13,12 @@ export default function Gallery() {
 
   useEffect(() => {
     setLoading(true)
-    axios.get(`/api/designs${activeCategory !== 'All' ? `?category=${encodeURIComponent(activeCategory)}` : ''}`)
-      .then(res => setDesigns(res.data.designs || []))
+    fetch('/data/designs.json')
+      .then(res => res.json())
+      .then(data => {
+        const all = data.designs || []
+        setDesigns(activeCategory === 'All' ? all : all.filter(d => d.category === activeCategory))
+      })
       .catch(() => setDesigns([]))
       .finally(() => setLoading(false))
   }, [activeCategory])

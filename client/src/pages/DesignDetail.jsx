@@ -23,8 +23,13 @@ export default function DesignDetail() {
   })
 
   useEffect(() => {
-    axios.get(`/api/designs/${id}`)
-      .then(res => { setDesign(res.data.design); setForm(f => ({ ...f, eventType: res.data.design?.category || '' })) })
+    fetch('/data/designs.json')
+      .then(res => res.json())
+      .then(data => {
+        const found = (data.designs || []).find(d => d.id === id)
+        setDesign(found || null)
+        if (found) setForm(f => ({ ...f, eventType: found.category || '' }))
+      })
       .catch(() => setDesign(null))
       .finally(() => setLoading(false))
   }, [id])
@@ -35,16 +40,13 @@ export default function DesignDetail() {
       showToast('Please fill all required fields', 'error'); return
     }
     setSubmitting(true)
-    try {
-      const res = await axios.post('/api/requests', { ...form, designId: id })
-      setSubmitted(true)
-      setRequestId(res.data.requestId)
-      showToast('Request sent successfully!', 'success')
-    } catch {
-      showToast('Failed to send request. Please try again.', 'error')
-    } finally {
-      setSubmitting(false)
-    }
+    const whatsappNumber = import.meta.env.VITE_WHATSAPP || '919876543210'
+    const message = `Hi! I'd like to book a decoration.\n\nName: ${form.customerName}\nPhone: ${form.phone}\nEvent: ${form.eventType}\nDate: ${form.eventDate}\nDesign: ${design?.title || 'N/A'}\nVenue: ${form.venue || 'Not specified'}\nBudget: ${form.budget || 'Not specified'}\nNotes: ${form.message || 'None'}`
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank')
+    setSubmitted(true)
+    setRequestId(Date.now().toString(36).toUpperCase())
+    showToast('Redirecting to WhatsApp!', 'success')
+    setSubmitting(false)
   }
 
   if (loading) return <div style={{paddingTop: 120}}><div className="spinner" /></div>

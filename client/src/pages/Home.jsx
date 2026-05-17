@@ -23,8 +23,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    axios.get('/api/designs?limit=6')
-      .then(res => setFeatured(res.data.designs?.slice(0, 6) || []))
+    fetch('/data/designs.json')
+      .then(res => res.json())
+      .then(data => setFeatured((data.designs || []).slice(0, 6)))
       .catch(() => setFeatured([]))
       .finally(() => setLoading(false))
   }, [])
