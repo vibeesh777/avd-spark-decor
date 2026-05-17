@@ -115,7 +115,7 @@ export default function DesignDetail() {
                 <p>The owner will contact you within 24 hours to confirm your booking.</p>
                 <div className="success-actions">
                   <Link to="/gallery" className="btn-outline">Browse More</Link>
-                  <a href={`https://wa.me/${import.meta.env.VITE_WHATSAPP || '9193842 17626'}`}
+                  <a href={`https://wa.me/${import.meta.env.VITE_WHATSAPP || '919384217626'}`}
                     target="_blank" rel="noreferrer" className="btn-gold">
                     Chat on WhatsApp
                   </a>
@@ -134,7 +134,7 @@ export default function DesignDetail() {
                   </div>
                   <div className="form-field">
                     <label>Phone Number *</label>
-                    <input type="tel" placeholder="+91 98765 43210"
+                    <input type="tel" placeholder="+91 93842 17626"
                       value={form.phone}
                       onChange={e => setForm({...form, phone: e.target.value})} required />
                   </div>

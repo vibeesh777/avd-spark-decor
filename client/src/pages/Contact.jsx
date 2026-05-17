@@ -58,7 +58,7 @@ export default function Contact() {
               </div>
             ))}
           </div>
-          <a href={`https://wa.me/9193842 17626?text=${encodeURIComponent('Hi! I want to book a decoration for my event.')}`}
+          <a href={`https://wa.me/919384217626?text=${encodeURIComponent('Hi! I want to book a decoration for my event.')}`}
             target="_blank" rel="noreferrer" className="btn-gold whatsapp-btn">
             💬 Chat on WhatsApp
           </a>
