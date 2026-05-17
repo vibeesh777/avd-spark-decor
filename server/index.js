@@ -35,8 +35,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'AVD Spark Decor API is running ✨' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🌟 AVD Spark Decor Server running on port ${PORT}`);
-  console.log(`   Local:   http://localhost:${PORT}/api/health`);
-  console.log(`   Network: Open from any device on the same WiFi\n`);
-});
+// Only start server if not running on Vercel
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🌟 AVD Spark Decor Server running on port ${PORT}`);
+    console.log(`   Local:   http://localhost:${PORT}/api/health`);
+    console.log(`   Network: Open from any device on the same WiFi\n`);
+  });
+}
+
+module.exports = app;
