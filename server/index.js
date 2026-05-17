@@ -11,9 +11,13 @@ const PORT = process.env.PORT || 5000;
 fs.ensureDirSync(path.join(__dirname, 'data'));
 fs.ensureDirSync(path.join(__dirname, 'uploads'));
 
-// Middleware — allow all local network origins (any device on same WiFi)
+// Middleware — allow all origins in production (Vercel), restrict in dev
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow all origins on Vercel
+    if (process.env.VERCEL === '1') return callback(null, true);
+
+    // In dev, allow no origin (same-origin) or local origins
     if (!origin) return callback(null, true);
     const isLocal = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin);
     if (isLocal) return callback(null, true);
