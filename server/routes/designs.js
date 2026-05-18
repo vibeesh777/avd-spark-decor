@@ -4,38 +4,28 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs-extra');
 const { v4: uuidv4 } = require('uuid');
+const cloudinary = require('cloudinary').v2;
 const { verifyAdmin } = require('../middleware/auth');
+
+// Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const DATA_FILE = path.join(__dirname, '../data/designs.json');
 
-// Ensure data file exists (skip on Vercel — read-only filesystem)
-if (process.env.VERCEL !== '1' && !fs.existsSync(DATA_FILE)) {
+if (!fs.existsSync(DATA_FILE)) {
   fs.writeJsonSync(DATA_FILE, { designs: [] });
 }
 
-const getDesigns = () => {
-  try {
-    return fs.readJsonSync(DATA_FILE).designs;
-  } catch {
-    return [];
-  }
-};
-const saveDesigns = (designs) => {
-  if (process.env.VERCEL === '1') return;
-  fs.writeJsonSync(DATA_FILE, { designs });
-};
+const getDesigns = () => fs.readJsonSync(DATA_FILE).designs;
+const saveDesigns = (designs) => fs.writeJsonSync(DATA_FILE, { designs });
 
-// Multer storage config (use /tmp on Vercel since filesystem is read-only)
-const uploadsDir = process.env.VERCEL === '1' ? '/tmp' : path.join(__dirname, '../uploads');
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `design_${uuidv4()}${ext}`);
-  }
-});
+// Multer - memory storage
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
@@ -43,7 +33,20 @@ const upload = multer({
   }
 });
 
-// GET all designs (public)
+// Upload image to Cloudinary
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { folder: 'avd-spark-decor' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    ).end(buffer);
+  });
+};
+
+// GET all designs
 router.get('/', (req, res) => {
   try {
     const designs = getDesigns();
@@ -57,7 +60,7 @@ router.get('/', (req, res) => {
   }
 });
 
-// GET single design (public)
+// GET single design
 router.get('/:id', (req, res) => {
   try {
     const designs = getDesigns();
@@ -69,18 +72,17 @@ router.get('/:id', (req, res) => {
   }
 });
 
-// POST new design (admin only)
-router.post('/', verifyAdmin, upload.array('images', 10), (req, res) => {
+// POST new design
+router.post('/', verifyAdmin, upload.array('images', 10), async (req, res) => {
   try {
     const { title, category, description, price, tags } = req.body;
     if (!title || !category) {
       return res.status(400).json({ success: false, message: 'Title and category required' });
     }
-    const images = (req.files || []).map(f => `/uploads/${f.filename}`);
+    const images = await Promise.all((req.files || []).map(f => uploadToCloudinary(f.buffer)));
     const newDesign = {
       id: uuidv4(),
-      title,
-      category,
+      title, category,
       description: description || '',
       price: price || 'Contact for pricing',
       tags: tags ? JSON.parse(tags) : [],
@@ -97,14 +99,14 @@ router.post('/', verifyAdmin, upload.array('images', 10), (req, res) => {
   }
 });
 
-// PUT update design (admin only)
-router.put('/:id', verifyAdmin, upload.array('images', 10), (req, res) => {
+// PUT update design
+router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => {
   try {
     const designs = getDesigns();
     const idx = designs.findIndex(d => d.id === req.params.id);
     if (idx === -1) return res.status(404).json({ success: false, message: 'Design not found' });
     const { title, category, description, price, tags, featured } = req.body;
-    const newImages = (req.files || []).map(f => `/uploads/${f.filename}`);
+    const newImages = await Promise.all((req.files || []).map(f => uploadToCloudinary(f.buffer)));
     designs[idx] = {
       ...designs[idx],
       title: title || designs[idx].title,
@@ -123,17 +125,12 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), (req, res) => {
   }
 });
 
-// DELETE design (admin only)
+// DELETE design
 router.delete('/:id', verifyAdmin, (req, res) => {
   try {
     let designs = getDesigns();
     const design = designs.find(d => d.id === req.params.id);
     if (!design) return res.status(404).json({ success: false, message: 'Design not found' });
-    // Delete image files
-    design.images.forEach(imgPath => {
-      const fullPath = path.join(__dirname, '..', imgPath);
-      if (fs.existsSync(fullPath)) fs.removeSync(fullPath);
-    });
     designs = designs.filter(d => d.id !== req.params.id);
     saveDesigns(designs);
     res.json({ success: true, message: 'Design deleted' });
