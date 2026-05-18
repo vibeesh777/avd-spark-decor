@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAdmin, useToast } from '../context/AdminContext'
 import './AdminDashboard.css'
 
+const API = import.meta.env.VITE_API_URL
 const CATEGORIES = ['Wedding', 'Birthday', 'Baby Shower', 'Puberty Function', 'Surprise Party', 'Engagement']
 const STATUS_COLORS = { new: '#ffd700', contacted: '#4a9eff', confirmed: '#4ade80', completed: '#888', cancelled: '#f87171' }
 
@@ -33,8 +34,8 @@ export default function AdminDashboard() {
     setLoading(true)
     try {
       const [dr, rr] = await Promise.all([
-        axios.get('/api/designs', { headers }),
-        axios.get('/api/requests', { headers })
+        axios.get(`${API}/api/designs`, { headers }),
+        axios.get(`${API}/api/requests`, { headers })
       ])
       setDesigns(dr.data.designs || [])
       setRequests(rr.data.requests || [])
@@ -48,7 +49,7 @@ export default function AdminDashboard() {
     Object.entries(form).forEach(([k, v]) => v && fd.append(k, k === 'tags' ? JSON.stringify(v.split(',').map(t=>t.trim()).filter(Boolean)) : v))
     files.forEach(f => fd.append('images', f))
     try {
-      await axios.post('/api/designs', fd, { headers: { ...headers, 'Content-Type': 'multipart/form-data' } })
+      await axios.post(`${API}/api/designs`, fd, { headers: { ...headers, 'Content-Type': 'multipart/form-data' } })
       showToast('Design added!'); setShowAddDesign(false)
       setForm({ title: '', category: '', description: '', price: '', tags: '' }); setFiles([])
       fetchAll()
@@ -58,14 +59,14 @@ export default function AdminDashboard() {
   const handleDeleteDesign = async (id) => {
     if (!confirm('Delete this design?')) return
     try {
-      await axios.delete(`/api/designs/${id}`, { headers })
+      await axios.delete(`${API}/api/designs/${id}`, { headers })
       showToast('Design deleted'); fetchAll()
     } catch { showToast('Delete failed', 'error') }
   }
 
   const handleStatusUpdate = async (id, status) => {
     try {
-      await axios.patch(`/api/requests/${id}/status`, { status }, { headers })
+      await axios.patch(`${API}/api/requests/${id}/status`, { status }, { headers })
       setRequests(r => r.map(req => req.id === id ? { ...req, status } : req))
       showToast('Status updated')
     } catch { showToast('Update failed', 'error') }
@@ -80,7 +81,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dash">
-      {/* SIDEBAR */}
       <aside className="admin-sidebar">
         <div className="sidebar-logo">
           <span className="logo-avd">AVD</span>
@@ -103,9 +103,7 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* MAIN */}
       <main className="admin-main">
-        {/* STATS */}
         <div className="stats-row">
           {[
             { label: 'Total Requests', value: stats.total, color: 'var(--gold)' },
@@ -121,7 +119,6 @@ export default function AdminDashboard() {
         </div>
 
         {loading ? <div className="spinner" /> : (
-
           tab === 'requests' ? (
             <div className="section-block">
               <h2>Customer Requests</h2>
@@ -183,7 +180,6 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {/* ADD FORM */}
               {showAddDesign && (
                 <form className="add-design-form" onSubmit={handleAddDesign}>
                   <h3>Add New Design</h3>
@@ -226,7 +222,6 @@ export default function AdminDashboard() {
                 </form>
               )}
 
-              {/* DESIGNS GRID */}
               {designs.length === 0 ? (
                 <p className="empty-msg">No designs yet. Add your first design above!</p>
               ) : (
