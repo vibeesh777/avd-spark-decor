@@ -1,29 +1,32 @@
-const express = require('express');
+ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs-extra');
 const { v4: uuidv4 } = require('uuid');
 const cloudinary = require('cloudinary').v2;
 const { verifyAdmin } = require('../middleware/auth');
+const axios = require('axios');
 
-// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const DATA_FILE = path.join(__dirname, '../data/designs.json');
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${process.env.JSONBIN_BIN_ID}`;
+const JSONBIN_HEADERS = {
+  'X-Master-Key': process.env.JSONBIN_API_KEY,
+  'Content-Type': 'application/json'
+};
 
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeJsonSync(DATA_FILE, { designs: [] });
-}
+const getDesigns = async () => {
+  const res = await axios.get(JSONBIN_URL, { headers: JSONBIN_HEADERS });
+  return res.data.record.designs || [];
+};
 
-const getDesigns = () => fs.readJsonSync(DATA_FILE).designs;
-const saveDesigns = (designs) => fs.writeJsonSync(DATA_FILE, { designs });
+const saveDesigns = async (designs) => {
+  await axios.put(JSONBIN_URL, { designs }, { headers: JSONBIN_HEADERS });
+};
 
-// Multer - memory storage
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -33,7 +36,6 @@ const upload = multer({
   }
 });
 
-// Upload image to Cloudinary
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload_stream(
@@ -47,9 +49,9 @@ const uploadToCloudinary = (buffer) => {
 };
 
 // GET all designs
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const designs = getDesigns();
+    const designs = await getDesigns();
     const { category } = req.query;
     const filtered = category && category !== 'All'
       ? designs.filter(d => d.category === category)
@@ -61,9 +63,9 @@ router.get('/', (req, res) => {
 });
 
 // GET single design
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const designs = getDesigns();
+    const designs = await getDesigns();
     const design = designs.find(d => d.id === req.params.id);
     if (!design) return res.status(404).json({ success: false, message: 'Design not found' });
     res.json({ success: true, design });
@@ -90,9 +92,9 @@ router.post('/', verifyAdmin, upload.array('images', 10), async (req, res) => {
       featured: false,
       createdAt: new Date().toISOString()
     };
-    const designs = getDesigns();
+    const designs = await getDesigns();
     designs.unshift(newDesign);
-    saveDesigns(designs);
+    await saveDesigns(designs);
     res.status(201).json({ success: true, design: newDesign });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -102,7 +104,7 @@ router.post('/', verifyAdmin, upload.array('images', 10), async (req, res) => {
 // PUT update design
 router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => {
   try {
-    const designs = getDesigns();
+    const designs = await getDesigns();
     const idx = designs.findIndex(d => d.id === req.params.id);
     if (idx === -1) return res.status(404).json({ success: false, message: 'Design not found' });
     const { title, category, description, price, tags, featured } = req.body;
@@ -118,7 +120,7 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
       images: newImages.length > 0 ? [...designs[idx].images, ...newImages] : designs[idx].images,
       updatedAt: new Date().toISOString()
     };
-    saveDesigns(designs);
+    await saveDesigns(designs);
     res.json({ success: true, design: designs[idx] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -126,13 +128,13 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
 });
 
 // DELETE design
-router.delete('/:id', verifyAdmin, (req, res) => {
+router.delete('/:id', verifyAdmin, async (req, res) => {
   try {
-    let designs = getDesigns();
+    let designs = await getDesigns();
     const design = designs.find(d => d.id === req.params.id);
     if (!design) return res.status(404).json({ success: false, message: 'Design not found' });
     designs = designs.filter(d => d.id !== req.params.id);
-    saveDesigns(designs);
+    await saveDesigns(designs);
     res.json({ success: true, message: 'Design deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
