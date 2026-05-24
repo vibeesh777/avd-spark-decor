@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useToast } from '../context/AdminContext'
 import './DesignDetail.css'
 
+const API = import.meta.env.VITE_API_URL
 const EVENT_TYPES = ['Wedding', 'Birthday', 'Baby Shower', 'Puberty Function', 'Surprise Party', 'Engagement', 'Other']
 
 export default function DesignDetail() {
@@ -23,13 +24,8 @@ export default function DesignDetail() {
   })
 
   useEffect(() => {
-    fetch('/data/designs.json')
-      .then(res => res.json())
-      .then(data => {
-        const found = (data.designs || []).find(d => d.id === id)
-        setDesign(found || null)
-        if (found) setForm(f => ({ ...f, eventType: found.category || '' }))
-      })
+    axios.get(`${API}/api/designs/${id}`)
+      .then(res => { setDesign(res.data.design); setForm(f => ({ ...f, eventType: res.data.design?.category || '' })) })
       .catch(() => setDesign(null))
       .finally(() => setLoading(false))
   }, [id])
@@ -40,13 +36,16 @@ export default function DesignDetail() {
       showToast('Please fill all required fields', 'error'); return
     }
     setSubmitting(true)
-    const whatsappNumber = import.meta.env.VITE_WHATSAPP || '919876543210'
-    const message = `Hi! I'd like to book a decoration.\n\nName: ${form.customerName}\nPhone: ${form.phone}\nEvent: ${form.eventType}\nDate: ${form.eventDate}\nDesign: ${design?.title || 'N/A'}\nVenue: ${form.venue || 'Not specified'}\nBudget: ${form.budget || 'Not specified'}\nNotes: ${form.message || 'None'}`
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank')
-    setSubmitted(true)
-    setRequestId(Date.now().toString(36).toUpperCase())
-    showToast('Redirecting to WhatsApp!', 'success')
-    setSubmitting(false)
+    try {
+      const res = await axios.post(`${API}/api/requests`, { ...form, designId: id })
+      setSubmitted(true)
+      setRequestId(res.data.requestId)
+      showToast('Request sent successfully!', 'success')
+    } catch {
+      showToast('Failed to send request. Please try again.', 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (loading) return <div style={{paddingTop: 120}}><div className="spinner" /></div>
@@ -69,7 +68,6 @@ export default function DesignDetail() {
         </div>
 
         <div className="detail-layout">
-          {/* IMAGES */}
           <div className="detail-images">
             <div className="main-image">
               {design.images?.[activeImg] ? (
@@ -93,7 +91,6 @@ export default function DesignDetail() {
             )}
           </div>
 
-          {/* INFO + FORM */}
           <div className="detail-info">
             <span className="detail-category">{design.category}</span>
             <h1 className="detail-title">{design.title}</h1>

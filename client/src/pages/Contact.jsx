@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useToast } from '../context/AdminContext'
 import './Contact.css'
 
+const API = import.meta.env.VITE_API_URL
 const EVENT_TYPES = ['Wedding', 'Birthday', 'Baby Shower', 'Puberty Function', 'Surprise Party', 'Engagement', 'Other']
 
 export default function Contact() {
@@ -21,7 +22,7 @@ export default function Contact() {
     }
     setSubmitting(true)
     try {
-      await axios.post('/api/requests', form)
+      await axios.post(`${API}/api/requests`, form)
       setSubmitted(true)
       showToast('Message sent!', 'success')
     } catch {
@@ -44,10 +45,10 @@ export default function Contact() {
           <p className="contact-intro">Tell us about your event and we'll reach out with a custom plan just for you.</p>
           <div className="contact-cards">
             {[
-              { icon: '📞', label: 'Call / WhatsApp', value: '+91 93842 17626', link: 'tel :+91 93842 17626' },
-              { icon: '✉️', label: 'Email', value: 'kingvibeeshraja@gmail.com', link: 'mailto:kingvibeeshraja@gmail.com' },
-              { icon: '📍', label: 'Location', value: 'perambalur, Tamil Nadu', link: null },
-              { icon: '⏰', label: 'Working Hours', value: 'Mon – Sun, everytime', link: null },
+              { icon: '📞', label: 'Call / WhatsApp', value: '+91 93842 17626', link: 'tel:+919384217626' },
+              { icon: '✉️', label: 'Email', value: 'avdsparkdecor@gmail.com', link: 'mailto:avdsparkdecor@gmail.com' },
+              { icon: '📍', label: 'Location', value: 'Chennai, Tamil Nadu', link: null },
+              { icon: '⏰', label: 'Working Hours', value: 'Mon – Sun, 9am – 8pm', link: null },
             ].map(c => (
               <div key={c.label} className="info-card">
                 <span className="info-icon">{c.icon}</span>
@@ -82,7 +83,7 @@ export default function Contact() {
                 </div>
                 <div className="form-field">
                   <label>Phone *</label>
-                  <input type="tel" placeholder="+91 ..." value={form.phone}
+                  <input type="tel" placeholder="+91 93842 17626" value={form.phone}
                     onChange={e => setForm({...form, phone: e.target.value})} required />
                 </div>
                 <div className="form-field">

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+ import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import './Gallery.css'
 
+const API = import.meta.env.VITE_API_URL
 const CATEGORIES = ['All', 'Wedding', 'Birthday', 'Baby Shower', 'Puberty Function', 'Surprise Party', 'Engagement']
 
 export default function Gallery() {
@@ -13,12 +14,8 @@ export default function Gallery() {
 
   useEffect(() => {
     setLoading(true)
-    fetch('/data/designs.json')
-      .then(res => res.json())
-      .then(data => {
-        const all = data.designs || []
-        setDesigns(activeCategory === 'All' ? all : all.filter(d => d.category === activeCategory))
-      })
+    axios.get(`${API}/api/designs${activeCategory !== 'All' ? `?category=${encodeURIComponent(activeCategory)}` : ''}`)
+      .then(res => setDesigns(res.data.designs || []))
       .catch(() => setDesigns([]))
       .finally(() => setLoading(false))
   }, [activeCategory])
@@ -34,7 +31,6 @@ export default function Gallery() {
         </p>
       </div>
 
-      {/* FILTER TABS */}
       <div className="gallery-filters">
         <div className="filter-scroll">
           {CATEGORIES.map(cat => (
