@@ -5,6 +5,7 @@ import { SITE } from '../config/site'
 const LINKS = [
   { to: '/', label: 'Home', end: true },
   { to: '/gallery', label: 'Gallery' },
+  { to: '/services', label: 'Services' },
   { to: '/contact', label: 'Contact' },
 ]
 
@@ -27,7 +28,7 @@ export default function Navbar() {
     <header className={`navbar ${scrolled || open ? 'scrolled' : ''}`}>
       <div className="nav-inner">
         <Link to="/" className="nav-brand" aria-label={`${SITE.name} home`}>
-          <img src="/logo-mark.jpg" alt="" width="132" height="50" />
+          <img src="/logo-mark.png" alt="" width="133" height="50" />
         </Link>
 
         <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Main">

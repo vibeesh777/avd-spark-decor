@@ -8,7 +8,7 @@ const axios = require('axios');
 
 const TTL_MS = 10_000;
 const cache = {};
-const binId = (name) => (name === 'designs' ? process.env.JSONBIN_BIN_ID : process.env.JSONBIN_REQUESTS_BIN_ID);
+const binId = (name) => (name === 'designs' ? process.env.JSONBIN_BIN_ID : undefined);
 const useBin = (name) => Boolean(process.env.JSONBIN_API_KEY && binId(name));
 const binUrl = (name) => `https://api.jsonbin.io/v3/b/${binId(name)}`;
 const headers = () => ({ 'X-Master-Key': process.env.JSONBIN_API_KEY, 'Content-Type': 'application/json' });

@@ -2,10 +2,10 @@
   "name": "avd-spark-decor",
   "version": "1.0.0",
   "scripts": {
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
-    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "install:all": "npm install && cd client && npm install && cd ../admin && npm install && cd ../server && npm install",
+    "dev": "concurrently -n api,site,admin \"cd server && npm run dev\" \"cd client && npm run dev\" \"cd admin && npm run dev\"",
     "start": "cd server && npm start",
-    "build": "cd client && npm run build"
+    "build": "cd client && npm run build && cd ../admin && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

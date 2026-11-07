@@ -5,18 +5,18 @@ import useReveal from '../hooks/useReveal'
 import { SITE } from '../config/site'
 
 export default function Contact() {
-  useMeta('Book Your Event', `Book your event decoration with ${SITE.name} in ${SITE.address} by phone call, WhatsApp or Instagram.`)
+  useMeta('Book Your Event', `Book your event decoration with ${SITE.name} in ${SITE.address} on WhatsApp or Instagram.`)
   useReveal()
 
   return (
     <div className="page">
       <div className="container">
         <SectionHead as="h1" eyebrow="Get in touch" title="Book Your" accent="Event"
-          sub="Call, WhatsApp or message us on Instagram — tell us your date, venue and the design you like." />
+          sub="Orders are placed on WhatsApp or Instagram — tell us your date, venue and the design you like. Calls are for emergencies." />
 
         <div className="contact-grid">
           <div className="form-card reveal">
-            <h2>How to book</h2>
+            <h2>How to order</h2>
             <BookingOptions />
           </div>
 

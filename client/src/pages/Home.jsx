@@ -3,9 +3,10 @@ import useDesigns from '../hooks/useDesigns'
 import useFavorites from '../hooks/useFavorites'
 import useMeta from '../hooks/useMeta'
 import useReveal from '../hooks/useReveal'
+import { WhatsAppIcon } from '../components/BrandIcons'
 import SectionHead from '../components/SectionHead'
 import DesignCard from '../components/DesignCard'
-import { SITE, waLink, CATEGORIES, HIGHLIGHTS, WHY_US, STEPS, PACKAGES, TESTIMONIALS, FAQ } from '../config/site'
+import { SITE, waLink, CATEGORIES, FEATURE_SERVICES, HIGHLIGHTS, WHY_US, STEPS, PACKAGES, TESTIMONIALS, FAQ } from '../config/site'
 
 export default function Home() {
   useMeta()
@@ -22,14 +23,14 @@ export default function Home() {
         <div className="hero-glow" aria-hidden="true" />
         <div className="sparkles" aria-hidden="true">{Array.from({ length: 18 }, (_, i) => <i key={i} style={{ '--i': i }} />)}</div>
         <div className="hero-content">
-          <img src="/logo.jpg" alt={`${SITE.name} ${SITE.suffix}, ${SITE.city}`} className="hero-logo" width="640" height="427" fetchpriority="high" />
+          <img src="/logo.png" alt={`${SITE.name} ${SITE.suffix}, ${SITE.city}`} className="hero-logo" width="640" height="427" fetchpriority="high" />
           <p className="hero-sub">
             Crafting unforgettable memories through the art of decoration.<br />
             Weddings · Birthdays · Baby Showers · Puberty Functions &amp; More
           </p>
           <div className="hero-actions">
             <Link to="/gallery" className="btn-gold">Explore Designs</Link>
-            <a href={waLink()} target="_blank" rel="noreferrer" className="btn-outline">Chat on WhatsApp</a>
+            <a href={waLink()} target="_blank" rel="noreferrer" className="btn-outline"><WhatsAppIcon size={18} /> Chat on WhatsApp</a>
           </div>
         </div>
         <a href="#events" className="scroll-hint" aria-label="Scroll down"><span /></a>
@@ -59,8 +60,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURED */}
+      {/* EXTRA SERVICES */}
       <section className="section alt">
+        <div className="container">
+          <SectionHead eyebrow="Beyond decoration" title="Make It" accent="Unforgettable"
+            sub="DJ, dancing teddies and confetti effects — book them with your decor." />
+          <div className="svc-teaser">
+            {FEATURE_SERVICES.map(f => (
+              <Link key={f.id} to={`/services#${f.id}`} className="svc-card reveal">
+                <img src={f.img} alt={f.title} loading="lazy" />
+                <div className="svc-card-body"><span className="svc-icon">{f.icon}</span><h3>{f.title}</h3><p>{f.desc}</p><span className="svc-more">Details &amp; prices →</span></div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURED */}
+      <section className="section">
         <div className="container">
           <SectionHead eyebrow="Portfolio highlights" title="Featured" accent="Designs" />
           {!featured ? (
@@ -159,10 +176,10 @@ export default function Home() {
       <section className="cta-banner">
         <div className="container reveal">
           <h2>Ready to Create <span className="gold-text">Magic?</span></h2>
-          <p>Browse the gallery, pick your favourite design and book by call, WhatsApp or Instagram.<br />We’ll make your dream event a beautiful reality.</p>
+          <p>Browse the gallery, pick your favourite design and place your order on WhatsApp or Instagram.<br />We’ll make your dream event a beautiful reality.</p>
           <div className="hero-actions">
             <Link to="/gallery" className="btn-gold">Browse Gallery</Link>
-            <a href={SITE.tel} className="btn-outline">📞 Call {SITE.phone}</a>
+            <a href={waLink()} target="_blank" rel="noreferrer" className="btn-outline"><WhatsAppIcon size={18} /> Order on WhatsApp</a>
           </div>
         </div>
       </section>

@@ -6,12 +6,12 @@ import useMeta from '../hooks/useMeta'
 import useReveal from '../hooks/useReveal'
 import SectionHead from '../components/SectionHead'
 import DesignCard from '../components/DesignCard'
-import { CATEGORIES } from '../config/site'
+import { ALL_CATEGORIES } from '../config/site'
 
-const TABS = ['All', ...CATEGORIES.map(c => c.name)]
+const TABS = ['All', ...ALL_CATEGORIES]
 
 export default function Gallery() {
-  useMeta('Design Gallery', 'Browse wedding, birthday, baby shower, puberty function and engagement decoration designs.')
+  useMeta('Design Gallery', 'Browse wedding, birthday, baby shower, puberty function and engagement decoration designs, plus DJ, teddy dancer and paper spray photos.')
   const designs = useDesigns()
   const fav = useFavorites()
   const [params, setParams] = useSearchParams()

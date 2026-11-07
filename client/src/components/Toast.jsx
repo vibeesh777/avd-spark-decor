@@ -1,4 +1,4 @@
-import { useToast } from '../context/AdminContext'
+import { useToast } from '../context/ToastContext'
 
 export default function Toast() {
   const { toast } = useToast()

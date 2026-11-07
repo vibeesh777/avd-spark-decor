@@ -7,7 +7,7 @@ import useReveal from '../hooks/useReveal'
 import BookingOptions from '../components/BookingOptions'
 import DesignCard from '../components/DesignCard'
 import Lightbox from '../components/Lightbox'
-import { useToast } from '../context/AdminContext'
+import { useToast } from '../context/ToastContext'
 
 export default function DesignDetail() {
   const { id } = useParams()
@@ -82,7 +82,7 @@ export default function DesignDetail() {
 
             <div className="form-card" id="book">
               <h2>Book this design</h2>
-              <p className="muted book-intro">Call, WhatsApp or Instagram — tell us your date and venue.</p>
+              <p className="muted book-intro">Order on WhatsApp or Instagram — tell us your date and venue.</p>
               <BookingOptions design={design} />
             </div>
           </div>

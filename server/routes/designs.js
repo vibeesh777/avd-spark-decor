@@ -3,6 +3,14 @@ const router = express.Router();
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const cloudinary = require('cloudinary').v2;
+
+// Configure image hosting from the backend environment variables.
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
 const { verifyAdmin } = require('../middleware/auth');
 const store = require('../lib/store');
 
@@ -89,7 +97,8 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
     const designs = await getDesigns();
     const idx = designs.findIndex(d => d.id === req.params.id);
     if (idx === -1) return res.status(404).json({ success: false, message: 'Design not found' });
-    const { title, category, description, price, tags, featured } = req.body;
+    const { title, category, description, price, tags, featured, removeImages } = req.body;
+    const toRemove = removeImages ? JSON.parse(removeImages) : [];
     const newImages = await Promise.all((req.files || []).map(f => uploadToCloudinary(f.buffer)));
     designs[idx] = {
       ...designs[idx],
@@ -99,7 +108,7 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
       price: price || designs[idx].price,
       tags: tags ? JSON.parse(tags) : designs[idx].tags,
       featured: featured !== undefined ? featured === 'true' : designs[idx].featured,
-      images: newImages.length > 0 ? [...designs[idx].images, ...newImages] : designs[idx].images,
+      images: [...designs[idx].images.filter(u => !toRemove.includes(u)), ...newImages],
       updatedAt: new Date().toISOString()
     };
     await saveDesigns(designs);

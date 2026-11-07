@@ -30,7 +30,6 @@ app.use(express.json({ limit: '100kb' }));
 app.use('/api/admin/login', rateLimit({ windowMs: 15 * 60_000, max: 10 }));
 
 app.use('/api/designs', require('./routes/designs'));
-app.use('/api/requests', require('./routes/requests'));
 app.use('/api/admin', require('./routes/admin'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'AVD Spark Decor API is running ✨' }));

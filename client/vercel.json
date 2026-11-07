@@ -1,7 +1,7 @@
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
-    { "source": "/uploads/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-    { "source": "/(logo.jpg|logo-mark.jpg|favicon.png)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }] }
+    { "source": "/(uploads|services)/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/(logo.jpg|logo.png|logo-mark.png|favicon.png)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }] }
   ]
 }
