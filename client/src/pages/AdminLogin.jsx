@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
+import { API } from '../lib/api'
 import { useAdmin, useToast } from '../context/AdminContext'
 import './AdminLogin.css'
 
@@ -15,7 +16,7 @@ export default function AdminLogin() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, { password })
+      const res = await axios.post(`${API}/api/admin/login`, { password })
       login(res.data.token)
       showToast('Welcome back!', 'success')
       navigate('/admin')

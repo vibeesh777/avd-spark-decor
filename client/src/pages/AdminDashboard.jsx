@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
+import { API } from '../lib/api'
 import { useAdmin, useToast } from '../context/AdminContext'
 import './AdminDashboard.css'
 
-const API = import.meta.env.VITE_API_URL
 const CATEGORIES = ['Wedding', 'Birthday', 'Baby Shower', 'Puberty Function', 'Surprise Party', 'Engagement']
 const STATUS_COLORS = { new: '#ffd700', contacted: '#4a9eff', confirmed: '#4ade80', completed: '#888', cancelled: '#f87171' }
 

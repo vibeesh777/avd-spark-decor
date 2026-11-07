@@ -1,15 +1,15 @@
 const express = require('express');
+const { passwordOk, issueToken } = require('../middleware/auth');
 const router = express.Router();
 
-// Simple password-based admin login
 router.post('/login', (req, res) => {
-  const { password } = req.body;
-  const adminPassword = process.env.ADMIN_PASSWORD || 'avd@admin2025';
-  if (password === adminPassword) {
-    res.json({ success: true, token: Buffer.from(`avd:${adminPassword}:${Date.now()}`).toString('base64') });
-  } else {
-    res.status(401).json({ success: false, message: 'Invalid password' });
+  if (!process.env.ADMIN_PASSWORD) {
+    return res.status(503).json({ success: false, message: 'Admin login is not configured on the server' });
   }
+  if (!passwordOk(req.body?.password)) {
+    return res.status(401).json({ success: false, message: 'Invalid password' });
+  }
+  res.json({ success: true, token: issueToken() });
 });
 
 module.exports = router;

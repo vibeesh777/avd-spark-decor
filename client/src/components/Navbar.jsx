@@ -1,47 +1,47 @@
-import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import './Navbar.css'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
+import { SITE } from '../config/site'
+
+const LINKS = [
+  { to: '/', label: 'Home', end: true },
+  { to: '/gallery', label: 'Gallery' },
+  { to: '/contact', label: 'Contact' },
+]
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const location = useLocation()
+  const [open, setOpen] = useState(false)
+  const { pathname } = useLocation()
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60)
-    window.addEventListener('scroll', onScroll)
+    const onScroll = () => setScrolled(window.scrollY > 40)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  useEffect(() => setMenuOpen(false), [location])
-
-  const links = [
-    { to: '/', label: 'Home' },
-    { to: '/gallery', label: 'Gallery' },
-    { to: '/contact', label: 'Contact' },
-  ]
+  useEffect(() => { setOpen(false); window.scrollTo({ top: 0 }) }, [pathname])
+  useEffect(() => { document.body.style.overflow = open ? 'hidden' : '' }, [open])
 
   return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div className="nav-container">
-        <Link to="/" className="nav-logo">
-          <span className="logo-avd">AVD</span>
-          <span className="logo-spark">Spark Decor</span>
+    <header className={`navbar ${scrolled || open ? 'scrolled' : ''}`}>
+      <div className="nav-inner">
+        <Link to="/" className="nav-brand" aria-label={`${SITE.name} home`}>
+          <img src="/logo-mark.jpg" alt="" width="132" height="50" />
         </Link>
 
-        <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
-          {links.map(l => (
-            <Link key={l.to} to={l.to} className={`nav-link ${location.pathname === l.to ? 'active' : ''}`}>
-              {l.label}
-            </Link>
+        <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Main">
+          {LINKS.map(l => (
+            <NavLink key={l.to} to={l.to} end={l.end} className="nav-link">{l.label}</NavLink>
           ))}
-          <Link to="/gallery" className="btn-gold nav-cta">Book Now</Link>
-        </div>
+          <Link to="/contact" className="btn-gold nav-cta">Book Now</Link>
+        </nav>
 
-        <button className="nav-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+        <button className={`hamburger ${open ? 'x' : ''}`} onClick={() => setOpen(o => !o)}
+          aria-label="Toggle menu" aria-expanded={open}>
           <span /><span /><span />
         </button>
       </div>
-    </nav>
+    </header>
   )
 }

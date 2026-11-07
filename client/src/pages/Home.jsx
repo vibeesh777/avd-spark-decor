@@ -1,76 +1,57 @@
-import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
-import './Home.css'
-
-const CATEGORIES = [
-  { name: 'Wedding', icon: '💍', desc: 'Timeless elegance' },
-  { name: 'Birthday', icon: '🎂', desc: 'Colorful celebrations' },
-  { name: 'Baby Shower', icon: '🍼', desc: 'Sweet beginnings' },
-  { name: 'Puberty Function', icon: '🌸', desc: 'A sacred milestone' },
-  { name: 'Surprise Party', icon: '🎉', desc: 'Magical moments' },
-  { name: 'Engagement', icon: '💑', desc: 'Love in bloom' },
-]
-
-const TESTIMONIALS = [
-  { name: 'Priya Rajan', event: 'Wedding', text: 'AVD Spark Decor transformed our wedding hall into a fairy tale. Every detail was perfect, and the floral arrangements were breathtaking!' },
-  { name: 'Kavitha S.', event: 'Baby Shower', text: 'I was completely surprised by how beautiful everything looked. The team was professional and delivered beyond expectations.' },
-  { name: 'Arun Kumar', event: 'Birthday', text: 'My son\'s birthday party was absolutely magical. The balloon decorations and theme setup were exactly what we imagined!' },
-]
+import useDesigns from '../hooks/useDesigns'
+import useFavorites from '../hooks/useFavorites'
+import useMeta from '../hooks/useMeta'
+import useReveal from '../hooks/useReveal'
+import SectionHead from '../components/SectionHead'
+import DesignCard from '../components/DesignCard'
+import { SITE, waLink, CATEGORIES, HIGHLIGHTS, WHY_US, STEPS, PACKAGES, TESTIMONIALS, FAQ } from '../config/site'
 
 export default function Home() {
-  const [featured, setFeatured] = useState([])
-  const [loading, setLoading] = useState(true)
+  useMeta()
+  const designs = useDesigns()
+  const fav = useFavorites()
+  useReveal(designs)
 
-  useEffect(() => {
-    fetch('/data/designs.json')
-      .then(res => res.json())
-      .then(data => setFeatured((data.designs || []).slice(0, 6)))
-      .catch(() => setFeatured([]))
-      .finally(() => setLoading(false))
-  }, [])
+  const featured = designs && [...designs].sort((a, b) => Number(!!b.featured) - Number(!!a.featured)).slice(0, 6)
 
   return (
-    <div className="home">
+    <>
       {/* HERO */}
       <section className="hero">
-        <div className="hero-bg">
-          <div className="hero-particles" />
-        </div>
+        <div className="hero-glow" aria-hidden="true" />
+        <div className="sparkles" aria-hidden="true">{Array.from({ length: 18 }, (_, i) => <i key={i} style={{ '--i': i }} />)}</div>
         <div className="hero-content">
-          <p className="hero-eyebrow">Welcome to</p>
-          <h1 className="hero-title">
-            <span className="hero-avd">AVD</span>
-            <span className="hero-spark">Spark Decor</span>
-          </h1>
-          <div className="divider" style={{margin: '24px auto'}} />
-          <p className="hero-subtitle">
+          <img src="/logo.jpg" alt={`${SITE.name} ${SITE.suffix}, ${SITE.city}`} className="hero-logo" width="640" height="427" fetchpriority="high" />
+          <p className="hero-sub">
             Crafting unforgettable memories through the art of decoration.<br />
-            Weddings · Birthdays · Baby Showers · Puberty Functions & More
+            Weddings · Birthdays · Baby Showers · Puberty Functions &amp; More
           </p>
           <div className="hero-actions">
             <Link to="/gallery" className="btn-gold">Explore Designs</Link>
-            <Link to="/contact" className="btn-outline">Get in Touch</Link>
+            <a href={waLink()} target="_blank" rel="noreferrer" className="btn-outline">Chat on WhatsApp</a>
           </div>
         </div>
-        <div className="hero-scroll">
-          <span>Scroll to discover</span>
-          <div className="scroll-line" />
-        </div>
+        <a href="#events" className="scroll-hint" aria-label="Scroll down"><span /></a>
       </section>
 
-      {/* CATEGORIES */}
-      <section className="section categories-section">
+      {/* MARQUEE */}
+      <div className="marquee" aria-hidden="true">
+        <div className="marquee-track">
+          {[...HIGHLIGHTS, ...HIGHLIGHTS].map((h, i) => <span key={i}>✦ {h}</span>)}
+        </div>
+      </div>
+
+      {/* EVENTS */}
+      <section className="section" id="events">
         <div className="container">
-          <p className="section-eyebrow">What we celebrate</p>
-          <h2 className="section-title">Events We <span className="gold-text">Decorate</span></h2>
-          <div className="divider" style={{margin: '12px auto 48px'}} />
-          <div className="categories-grid">
-            {CATEGORIES.map(cat => (
-              <Link to={`/gallery?category=${encodeURIComponent(cat.name)}`} key={cat.name} className="cat-card">
-                <div className="cat-icon">{cat.icon}</div>
-                <h3>{cat.name}</h3>
-                <p>{cat.desc}</p>
+          <SectionHead eyebrow="What we celebrate" title="Events We" accent="Decorate" />
+          <div className="cat-grid">
+            {CATEGORIES.map(c => (
+              <Link key={c.name} to={`/gallery?category=${encodeURIComponent(c.name)}`} className="cat-card reveal">
+                <span className="cat-icon">{c.icon}</span>
+                <h3>{c.name}</h3>
+                <p>{c.desc}</p>
                 <span className="cat-arrow">→</span>
               </Link>
             ))}
@@ -78,64 +59,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURED DESIGNS */}
-      <section className="section featured-section">
+      {/* FEATURED */}
+      <section className="section alt">
         <div className="container">
-          <p className="section-eyebrow">Portfolio highlights</p>
-          <h2 className="section-title">Featured <span className="gold-text">Designs</span></h2>
-          <div className="divider" style={{margin: '12px auto 48px'}} />
-          {loading ? (
-            <div className="spinner" />
+          <SectionHead eyebrow="Portfolio highlights" title="Featured" accent="Designs" />
+          {!featured ? (
+            <div className="design-grid">{Array.from({ length: 3 }, (_, i) => <div key={i} className="skeleton" />)}</div>
           ) : featured.length === 0 ? (
-            <div className="empty-state">
-              <p>✨ Designs coming soon. Check back later!</p>
-              <Link to="/contact" className="btn-outline" style={{marginTop: 20}}>Contact Us</Link>
-            </div>
+            <div className="empty-state"><p>✨ Designs coming soon.</p><Link to="/contact" className="btn-outline">Contact Us</Link></div>
           ) : (
-            <div className="designs-grid">
-              {featured.map(design => (
-                <Link to={`/gallery/${design.id}`} key={design.id} className="design-card">
-                  <div className="design-img-wrap">
-                    {design.images?.[0] ? (
-                      <img src={design.images[0]} alt={design.title} loading="lazy" />
-                    ) : (
-                      <div className="design-img-placeholder">
-                        <span>✨</span>
-                      </div>
-                    )}
-                    <div className="design-overlay">
-                      <span className="view-btn">View Design</span>
-                    </div>
-                  </div>
-                  <div className="design-info">
-                    <span className="design-category">{design.category}</span>
-                    <h3 className="design-title">{design.title}</h3>
-                    <span className="design-price">{design.price}</span>
-                  </div>
-                </Link>
-              ))}
+            <div className="design-grid">
+              {featured.map(d => <DesignCard key={d.id} design={d} favorite={fav.has(d.id)} onToggleFavorite={fav.toggle} />)}
             </div>
           )}
-          <div style={{textAlign: 'center', marginTop: 48}}>
-            <Link to="/gallery" className="btn-outline">View Full Gallery →</Link>
-          </div>
+          <div className="center mt"><Link to="/gallery" className="btn-outline">View Full Gallery →</Link></div>
         </div>
       </section>
 
       {/* WHY US */}
-      <section className="section why-section">
+      <section className="section">
         <div className="container">
-          <h2 className="section-title">Why Choose <span className="gold-text">AVD?</span></h2>
-          <div className="divider" style={{margin: '12px auto 48px'}} />
+          <SectionHead title="Why Choose" accent="AVD?" />
           <div className="why-grid">
-            {[
-              { icon: '🎨', title: 'Custom Designs', desc: 'Every event is unique. We create designs tailored exclusively for you.' },
-              { icon: '⭐', title: 'Premium Quality', desc: 'Only the finest flowers, fabrics and materials for every decoration.' },
-              { icon: '⏱️', title: 'On-Time Delivery', desc: 'We respect your timeline and deliver flawless setups every time.' },
-              { icon: '💬', title: 'Personal Support', desc: 'Dedicated consultation from design to execution with your vision at heart.' },
-            ].map(w => (
-              <div key={w.title} className="why-card">
-                <div className="why-icon">{w.icon}</div>
+            {WHY_US.map(w => (
+              <div key={w.title} className="why-card reveal">
+                <span className="why-icon">{w.icon}</span>
                 <h3>{w.title}</h3>
                 <p>{w.desc}</p>
               </div>
@@ -144,38 +92,80 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="section testimonials-section">
+      {/* HOW IT WORKS */}
+      <section className="section alt">
         <div className="container">
-          <p className="section-eyebrow">What clients say</p>
-          <h2 className="section-title">Happy <span className="gold-text">Memories</span></h2>
-          <div className="divider" style={{margin: '12px auto 48px'}} />
-          <div className="testimonials-grid">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="testimonial-card">
-                <div className="testimonial-stars">★★★★★</div>
-                <p className="testimonial-text">"{t.text}"</p>
-                <div className="testimonial-author">
-                  <div className="author-avatar">{t.name[0]}</div>
-                  <div>
-                    <strong>{t.name}</strong>
-                    <span>{t.event}</span>
-                  </div>
-                </div>
+          <SectionHead eyebrow="Simple process" title="How It" accent="Works" />
+          <ol className="steps">
+            {STEPS.map(s => (
+              <li key={s.n} className="step reveal">
+                <span className="step-n">{s.n}</span>
+                <h3>{s.title}</h3>
+                <p>{s.desc}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* PACKAGES */}
+      <section className="section">
+        <div className="container">
+          <SectionHead eyebrow="Decor packages" title="Choose Your" accent="Style"
+            sub="Every package is customised to your venue, theme and budget." />
+          <div className="pkg-grid">
+            {PACKAGES.map(p => (
+              <div key={p.name} className={`pkg-card reveal ${p.featured ? 'featured' : ''}`}>
+                <span className="pkg-tag">{p.tag}</span>
+                <h3>{p.name}</h3>
+                <ul>{p.items.map(i => <li key={i}>{i}</li>)}</ul>
+                <a href={waLink(`Hi! I'm interested in the ${p.name} decoration package.`)} target="_blank" rel="noreferrer"
+                  className={p.featured ? 'btn-gold' : 'btn-outline'}>Get a Quote</a>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA BANNER */}
-      <section className="cta-banner">
+      {/* TESTIMONIALS */}
+      <section className="section alt">
         <div className="container">
-          <h2>Ready to Create <span className="gold-text">Magic?</span></h2>
-          <p>Browse our gallery, pick your favorite design, and send us a request.<br />We'll make your dream event a beautiful reality.</p>
-          <Link to="/gallery" className="btn-gold" style={{fontSize: 14}}>Browse Gallery & Book</Link>
+          <SectionHead eyebrow="What clients say" title="Happy" accent="Memories" />
+          <div className="testi-grid">
+            {TESTIMONIALS.map(t => (
+              <figure key={t.name} className="testi-card reveal">
+                <div className="stars" aria-label="5 out of 5 stars">★★★★★</div>
+                <blockquote>“{t.text}”</blockquote>
+                <figcaption><span className="avatar">{t.name[0]}</span><span><strong>{t.name}</strong><small>{t.event}</small></span></figcaption>
+              </figure>
+            ))}
+          </div>
         </div>
       </section>
-    </div>
+
+      {/* FAQ */}
+      <section className="section">
+        <div className="container narrow">
+          <SectionHead eyebrow="Good to know" title="Frequently Asked" accent="Questions" />
+          <div className="faq reveal">
+            {FAQ.map(f => (
+              <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="cta-banner">
+        <div className="container reveal">
+          <h2>Ready to Create <span className="gold-text">Magic?</span></h2>
+          <p>Browse the gallery, pick your favourite design and book by call, WhatsApp or Instagram.<br />We’ll make your dream event a beautiful reality.</p>
+          <div className="hero-actions">
+            <Link to="/gallery" className="btn-gold">Browse Gallery</Link>
+            <a href={SITE.tel} className="btn-outline">📞 Call {SITE.phone}</a>
+          </div>
+        </div>
+      </section>
+    </>
   )
 }

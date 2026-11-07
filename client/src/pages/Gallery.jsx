@@ -1,83 +1,79 @@
- import { useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
-import './Gallery.css'
+import useDesigns from '../hooks/useDesigns'
+import useFavorites from '../hooks/useFavorites'
+import useMeta from '../hooks/useMeta'
+import useReveal from '../hooks/useReveal'
+import SectionHead from '../components/SectionHead'
+import DesignCard from '../components/DesignCard'
+import { CATEGORIES } from '../config/site'
 
-const API = import.meta.env.VITE_API_URL
-const CATEGORIES = ['All', 'Wedding', 'Birthday', 'Baby Shower', 'Puberty Function', 'Surprise Party', 'Engagement']
+const TABS = ['All', ...CATEGORIES.map(c => c.name)]
 
 export default function Gallery() {
-  const [designs, setDesigns] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const activeCategory = searchParams.get('category') || 'All'
+  useMeta('Design Gallery', 'Browse wedding, birthday, baby shower, puberty function and engagement decoration designs.')
+  const designs = useDesigns()
+  const fav = useFavorites()
+  const [params, setParams] = useSearchParams()
+  const [query, setQuery] = useState('')
+  const category = params.get('category') || 'All'
+  const savedOnly = params.get('saved') === '1'
 
-  useEffect(() => {
-    setLoading(true)
-    axios.get(`${API}/api/designs${activeCategory !== 'All' ? `?category=${encodeURIComponent(activeCategory)}` : ''}`)
-      .then(res => setDesigns(res.data.designs || []))
-      .catch(() => setDesigns([]))
-      .finally(() => setLoading(false))
-  }, [activeCategory])
+  const update = patch => {
+    const next = Object.fromEntries(params)
+    Object.entries(patch).forEach(([k, v]) => (v ? (next[k] = v) : delete next[k]))
+    setParams(next, { replace: true })
+  }
+
+  const list = useMemo(() => {
+    if (!designs) return null
+    const q = query.trim().toLowerCase()
+    return designs.filter(d =>
+      (category === 'All' || d.category === category) &&
+      (!savedOnly || fav.ids.includes(d.id)) &&
+      (!q || `${d.title} ${d.category} ${(d.tags || []).join(' ')}`.toLowerCase().includes(q)))
+  }, [designs, category, savedOnly, query, fav.ids])
+
+  useReveal(`${category}|${savedOnly}|${query}|${list?.length}`)
 
   return (
-    <div className="gallery-page">
-      <div className="gallery-header">
-        <p className="section-eyebrow">Our portfolio</p>
-        <h1 className="section-title">Design <span className="gold-text">Gallery</span></h1>
-        <div className="divider" style={{margin: '12px auto 24px'}} />
-        <p style={{color: 'var(--white-muted)', fontSize: 15, textAlign: 'center', maxWidth: 480, margin: '0 auto'}}>
-          Browse our curated collection and select the perfect design for your special occasion.
-        </p>
-      </div>
+    <div className="page">
+      <div className="container">
+        <SectionHead as="h1" eyebrow="Our portfolio" title="Design" accent="Gallery"
+          sub="Browse our curated collection and select the perfect design for your special occasion." />
 
-      <div className="gallery-filters">
-        <div className="filter-scroll">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              className={`filter-btn ${activeCategory === cat ? 'active' : ''}`}
-              onClick={() => setSearchParams(cat === 'All' ? {} : { category: cat })}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="container" style={{paddingBottom: 80}}>
-        {loading ? (
-          <div className="spinner" />
-        ) : designs.length === 0 ? (
-          <div className="empty-state" style={{padding: '80px 20px'}}>
-            <div style={{fontSize: 48, marginBottom: 16}}>✨</div>
-            <h3 style={{marginBottom: 8, color: 'var(--gold)'}}>No designs yet</h3>
-            <p>Designs for this category will be added soon. Contact us for a custom design!</p>
-            <Link to="/contact" className="btn-outline" style={{marginTop: 24, display: 'inline-flex'}}>Contact Owner</Link>
-          </div>
-        ) : (
-          <div className="gallery-grid">
-            {designs.map((design, i) => (
-              <Link
-                to={`/gallery/${design.id}`}
-                key={design.id}
-                className={`gallery-item ${i % 7 === 0 || i % 7 === 4 ? 'large' : ''}`}
-              >
-                <div className="gallery-img-wrap">
-                  {design.images?.[0] ? (
-                    <img src={design.images[0]} alt={design.title} loading="lazy" />
-                  ) : (
-                    <div className="gallery-img-placeholder">✨</div>
-                  )}
-                  <div className="gallery-item-overlay">
-                    <span className="gallery-item-category">{design.category}</span>
-                    <h3 className="gallery-item-title">{design.title}</h3>
-                    <span className="gallery-item-cta">View & Request →</span>
-                  </div>
-                </div>
-              </Link>
+        <div className="toolbar">
+          <div className="chips" aria-label="Event category">
+            {TABS.map(t => (
+              <button key={t} aria-pressed={category === t}
+                className={`chip ${category === t ? 'active' : ''}`}
+                onClick={() => update({ category: t === 'All' ? '' : t })}>{t}</button>
             ))}
           </div>
+          <div className="tool-right">
+            <input type="search" className="search" placeholder="Search designs…" value={query}
+              onChange={e => setQuery(e.target.value)} aria-label="Search designs" />
+            <button className={`chip ${savedOnly ? 'active' : ''}`} aria-pressed={savedOnly}
+              onClick={() => update({ saved: savedOnly ? '' : '1' })}>♥ Saved ({fav.ids.length})</button>
+          </div>
+        </div>
+
+        {!list ? (
+          <div className="design-grid">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}</div>
+        ) : list.length === 0 ? (
+          <div className="empty-state">
+            <div className="big">✨</div>
+            <h3>{savedOnly ? 'No saved designs yet' : 'No designs found'}</h3>
+            <p>{savedOnly ? 'Tap the ♡ on any design to save it here.' : 'Try another category or contact us for a custom design!'}</p>
+            <Link to="/contact" className="btn-outline">Contact Us</Link>
+          </div>
+        ) : (
+          <>
+            <p className="result-count">{list.length} design{list.length > 1 ? 's' : ''}</p>
+            <div className="design-grid">
+              {list.map(d => <DesignCard key={d.id} design={d} favorite={fav.has(d.id)} onToggleFavorite={fav.toggle} />)}
+            </div>
+          </>
         )}
       </div>
     </div>

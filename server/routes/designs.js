@@ -1,31 +1,13 @@
- const express = require('express');
+const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const cloudinary = require('cloudinary').v2;
 const { verifyAdmin } = require('../middleware/auth');
-const axios = require('axios');
+const store = require('../lib/store');
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${process.env.JSONBIN_BIN_ID}`;
-const JSONBIN_HEADERS = {
-  'X-Master-Key': process.env.JSONBIN_API_KEY,
-  'Content-Type': 'application/json'
-};
-
-const getDesigns = async () => {
-  const res = await axios.get(JSONBIN_URL, { headers: JSONBIN_HEADERS });
-  return res.data.record.designs || [];
-};
-
-const saveDesigns = async (designs) => {
-  await axios.put(JSONBIN_URL, { designs }, { headers: JSONBIN_HEADERS });
-};
+const getDesigns = () => store.read('designs');
+const saveDesigns = (designs) => store.write('designs', designs);
 
 const upload = multer({
   storage: multer.memoryStorage(),

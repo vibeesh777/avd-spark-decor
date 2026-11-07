@@ -1,124 +1,61 @@
-# 🌟 AVD Spark Decor — Full Stack Website
+# AVD Spark Decor — Event Decoration Website
 
-A luxury event decoration website with customer gallery, booking requests, and owner admin panel.
+React (Vite) frontend + Node/Express backend. Gold-and-black theme built around the AVD logo.
 
----
-
-## 📁 Project Structure
-
-```
-avd-spark-decor/
-├── client/          ← React frontend (Vite)
-│   └── src/
-│       ├── pages/   ← Home, Gallery, DesignDetail, Contact, Admin
-│       ├── components/  ← Navbar, Footer, Toast
-│       └── context/ ← AdminContext (auth + toast)
-├── server/          ← Node.js + Express backend
-│   ├── routes/      ← designs.js, requests.js, admin.js
-│   ├── middleware/  ← auth.js
-│   ├── data/        ← designs.json, requests.json (auto-created)
-│   └── uploads/     ← uploaded images (auto-created)
-└── package.json     ← root scripts
-```
-
----
-
-## 🚀 Setup & Run
-
-### Step 1 — Install dependencies
+## Quick start
 
 ```bash
-npm run install:all
+npm run install:all          # installs root, client and server
+cp server/.env.example server/.env   # then fill it in (see below)
+npm run dev                  # site → http://localhost:5173   API → http://localhost:5000
 ```
 
-### Step 2 — Configure environment
+Bookings are taken **only by phone call, WhatsApp and Instagram** — there is no booking form.
+The site works even with no backend: designs fall back to `client/public/data/designs.json`.
 
-```bash
-cd server
-cp .env.example .env
-# Edit .env with your Gmail and WhatsApp number
-```
+## Change business details in ONE place
 
-**Required .env values:**
-| Variable | Value |
+Open **`client/src/config/site.js`**: name, city, phone, WhatsApp number, hours,
+packages, FAQ, testimonials, event categories.
+(Set `city` to your real location — it appears in the footer, contact page, map and Google description.)
+
+Optional frontend env vars (Vercel → Settings → Environment Variables):
+
+| Variable | Purpose |
 |---|---|
-| `EMAIL_USER` | Your Gmail address |
-| `EMAIL_PASS` | Gmail App Password (not your regular password) |
-| `OWNER_EMAIL` | Where booking emails go (can be same as EMAIL_USER) |
-| `OWNER_WHATSAPP` | Your WhatsApp number with country code (e.g. `919876543210`) |
-| `ADMIN_PASSWORD` | Your admin panel password |
+| `VITE_API_URL` | URL of your deployed backend (leave empty for local dev) |
+| `VITE_WHATSAPP` | WhatsApp number with country code, e.g. `919384217626` |
+| `VITE_INSTAGRAM_HANDLE` | Your Instagram username, e.g. `avdsparkdecor` (the Instagram button stays hidden until set) |
 
-> **Gmail App Password:** Go to Google Account → Security → 2-Step Verification → App Passwords → create one for "Mail"
+## Backend environment (`server/.env`)
 
-### Step 3 — Run development servers
-
-```bash
-npm run dev
-```
-
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:5000
-
----
-
-## 🔐 Admin Panel
-
-URL: http://localhost:5173/admin/login
-
-**Features:**
-- 📊 Dashboard with stats (total requests, new, confirmed)
-- 📋 View all customer requests with status management
-- 🎨 Upload and manage design photos
-- 💬 One-click WhatsApp reply to customers
-- 🔄 Update booking status (New → Contacted → Confirmed → Completed)
-
----
-
-## 🌐 Customer Features
-
-- **Home page** — Hero, event categories, featured designs, testimonials
-- **Gallery** — Filter by event type, masonry grid layout
-- **Design Detail** — Photo gallery + booking request form
-- **Contact page** — General enquiry form
-
----
-
-## 📧 Notifications
-
-When a customer submits a request:
-1. **Owner gets an email** with all details + WhatsApp quick-reply link
-2. **Customer gets a confirmation email** with their Request ID (if email provided)
-
----
-
-## 🚀 Production Deployment
-
-### Frontend (Vercel / Netlify)
-```bash
-cd client && npm run build
-# Upload the `dist/` folder
-# Set VITE_WHATSAPP=919876543210 in environment variables
-```
-
-### Backend (Railway / Render / VPS)
-```bash
-cd server && npm start
-# Set all .env variables in the hosting dashboard
-```
-
----
-
-## 📱 Tech Stack
-
-| Layer | Technology |
+| Variable | Notes |
 |---|---|
-| Frontend | React 18 + Vite + React Router |
-| Backend | Node.js + Express |
-| Storage | JSON files (upgradeable to MongoDB) |
-| Email | Nodemailer + Gmail SMTP |
-| Images | Multer (local uploads) |
-| Auth | Simple token-based admin auth |
+| `ADMIN_PASSWORD` | **Required.** Admin login is disabled until it is set. Use a long unique password. |
+| `CLIENT_URL` | Your site URL(s), comma-separated (CORS). |
+| `CLOUDINARY_*` | Image uploads. |
+| `JSONBIN_API_KEY`, `JSONBIN_BIN_ID` | Storage for designs (needed on Vercel). Create one bin starting as `{"designs":[]}`. |
 
----
+Without JSONBin the server stores data in `server/data/*.json` (fine on your own PC/VPS, not on Vercel).
 
-*Made with ✨ for AVD Spark Decor, Chennai*
+## Pages & features
+
+- **Home** — animated logo hero, scrolling highlights, event categories, featured designs, why-us, how-it-works, packages, testimonials, FAQ, call-to-action
+- **Gallery** — instant category filter, search, ♥ saved designs (remembered in the browser), skeleton loading
+- **Design page** — photo viewer with full-screen lightbox, share / copy link, related designs, Call / WhatsApp / Instagram booking buttons
+- **Contact** — how-to-book buttons, location and Google map
+- **Booking** — one-tap Call / WhatsApp (pre-filled with the chosen design) / Instagram buttons
+- **Admin** (`/admin/login`) — upload and delete designs
+- Floating WhatsApp button, back-to-top, mobile menu, SEO tags per page, link-preview (Open Graph) tags, `robots.txt`
+
+## Security & performance notes
+
+- Admin tokens are signed and expire after 12 h (the password is never inside the token); no default password.
+- The admin login is rate-limited.
+- Admin code is lazy-loaded; React is split into its own cached chunk; designs are fetched once and shared by all pages;
+  images are lazy-loaded; animations respect "reduce motion".
+
+## Deploy
+
+- **Frontend (Vercel):** root directory `client`, build `npm run build`, output `dist`.
+- **Backend:** Railway / Render / VPS — `cd server && npm start`, set all variables above.

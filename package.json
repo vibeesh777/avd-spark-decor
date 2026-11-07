@@ -4,7 +4,8 @@
   "scripts": {
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
     "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
-    "start": "cd server && npm start"
+    "start": "cd server && npm start",
+    "build": "cd client && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
