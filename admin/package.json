@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview" },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "axios": "^1.6.2",
     "react": "^18.2.0",
@@ -11,5 +15,8 @@
     "react-router-dom": "^6.21.1",
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.0.8"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true
   }
 }

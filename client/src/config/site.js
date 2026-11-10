@@ -7,8 +7,8 @@ export const SITE = {
   name: 'AVD Spark Decor',
   suffix: '& Event Management',
   tagline: 'Creating & Lighting the Celebrations of Your Family',
-  city: 'Krishnapuram, Perambalur',
-  region: 'Tamil Nadu, India',
+  city: 'Krishnapuram, Perambalur',   // ← change if your location changes
+  region: 'Tamil Nadu',
   // Orders: WhatsApp on ALL three numbers. Phone calls (emergency only): numbers 2 and 3.
   phones: [
     { label: '95970 66343', number: '919597066343', call: false, main: true },
