@@ -6,7 +6,7 @@ import Toast from './components/Toast'
 import FloatingActions from './components/FloatingActions'
 import Home from './pages/Home'
 import Gallery from './pages/Gallery'
-import DesignDetail from './pages/DesignDetail'
+import FunctionPage from './pages/FunctionPage'
 import Services from './pages/Services'
 import Contact from './pages/Contact'
 import NotFound from './pages/NotFound'
@@ -32,7 +32,7 @@ export default function App() {
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/gallery" element={<Gallery />} />
-              <Route path="/gallery/:id" element={<DesignDetail />} />
+              <Route path="/gallery/:slug" element={<FunctionPage />} />
               <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="*" element={<NotFound />} />

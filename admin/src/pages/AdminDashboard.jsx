@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { API, SITE_URL } from '../lib/api'
 import { shrink } from '../lib/images'
-import { ALL_CATEGORIES } from '../categories'
+import { ALL_CATEGORIES, slugify } from '../categories'
 import { useAdmin, useToast } from '../context/AdminContext'
 import './AdminDashboard.css'
 
@@ -80,10 +80,6 @@ export default function AdminDashboard() {
     const fd = new FormData(); fd.append('removeImages', JSON.stringify([url]))
     if (await send('put', `/${id}`, fd)) { showToast('Photo deleted'); load() }
   }
-  const toggleFeatured = async d => {
-    const fd = new FormData(); fd.append('featured', String(!d.featured))
-    if (await send('put', `/${d.id}`, fd)) load()
-  }
   const removeAlbum = async d => {
     if (!confirm(`Delete "${d.title}" and all its photos?`)) return
     if (await send('delete', `/${d.id}`)) { showToast('Deleted'); load() }
@@ -95,7 +91,6 @@ export default function AdminDashboard() {
     { label: 'Albums', value: designs.length, color: 'var(--gold)' },
     { label: 'Photos', value: photoCount(designs), color: '#4a9eff' },
     { label: 'Functions with photos', value: new Set(designs.map(d => d.category)).size, color: '#4ade80' },
-    { label: 'Featured on home', value: designs.filter(d => d.featured).length, color: '#ffd700' },
   ]
 
   return (
@@ -174,7 +169,7 @@ export default function AdminDashboard() {
                 <div key={d.id} className="admin-design-card">
                   <div className="admin-card-img">
                     {d.images?.[0] ? <img src={d.images[0]} alt={d.title} loading="lazy" /> : <div className="no-img">✨</div>}
-                    <span className="img-count">{d.images?.length || 0} photos</span>
+                    <span className="img-count">{d.images?.length || 0} photo{d.images?.length === 1 ? '' : 's'}</span>
                   </div>
                   <div className="admin-card-info">
                     <span className="design-category">{d.category}</span>
@@ -192,8 +187,7 @@ export default function AdminDashboard() {
                       <input type="file" multiple accept="image/*" hidden onChange={e => { addPhotos(d.id, e.target.files); e.target.value = '' }} />
                     </label>
                     <button className="action-btn view" onClick={() => setOpenId(openId === d.id ? null : d.id)}>{openId === d.id ? 'Done' : 'Manage'}</button>
-                    <button className={`action-btn star ${d.featured ? 'on' : ''}`} onClick={() => toggleFeatured(d)} title="Show on home page">{d.featured ? '★' : '☆'}</button>
-                    <a href={`${SITE_URL}/gallery/${d.id}`} target="_blank" rel="noreferrer" className="action-btn view">View</a>
+                    <a href={`${SITE_URL}/gallery/${slugify(d.category)}`} target="_blank" rel="noreferrer" className="action-btn view">View</a>
                     <button className="action-btn delete" onClick={() => removeAlbum(d)}>Delete</button>
                   </div>
                 </div>

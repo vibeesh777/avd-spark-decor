@@ -41,7 +41,16 @@ export const CATEGORIES = [
 ]
 // Photo sections for services (admin can upload photos to these too)
 export const SERVICE_CATEGORIES = ['DJ Setup', 'Teddy Dancers', 'Paper Spray']
-export const ALL_CATEGORIES = [...CATEGORIES.map(c => c.name), ...SERVICE_CATEGORIES]
+
+// Every function the owner uploads photos for. Touching one opens a page with ALL its photos.
+export const slugify = name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+export const FUNCTIONS = [
+  ...CATEGORIES,
+  { name: 'DJ Setup', icon: '🎧', desc: 'Music & lights', service: true },
+  { name: 'Teddy Dancers', icon: '🧸', desc: 'Mascot entertainers', service: true },
+  { name: 'Paper Spray', icon: '🎊', desc: 'Confetti & smoke effects', service: true },
+].map(f => ({ ...f, slug: slugify(f.name) }))
+export const ALL_CATEGORIES = FUNCTIONS.map(f => f.name)
 
 export const HIGHLIGHTS = [
   'Custom Themes', 'Stage & Backdrops', 'Balloon Decor', 'DJ Music Setup',
@@ -98,13 +107,6 @@ export const STEPS = [
   { n: '02', title: 'Send your request', desc: 'Call, WhatsApp or message us on Instagram with your date and venue.' },
   { n: '03', title: 'Get your plan', desc: 'We call you with a customised plan and quote.' },
   { n: '04', title: 'Enjoy your event', desc: 'Our team sets everything up before your guests arrive.' },
-]
-
-// Sample packages — edit the lists freely (no prices are shown on purpose)
-export const PACKAGES = [
-  { name: 'Classic', tag: 'Simple & elegant', items: ['Themed backdrop', 'Balloon garland', 'Table decor', 'Name board'] },
-  { name: 'Premium', tag: 'Most popular', featured: true, items: ['Designer stage', 'Floral & balloon mix', 'Entrance arch', 'Photo corner', 'Lighting'] },
-  { name: 'Royal', tag: 'Grand occasions', items: ['Full venue styling', 'Custom stage & props', 'Premium florals', 'Special effects', 'Dedicated team'] },
 ]
 
 // Replace with your real customer reviews when you have them

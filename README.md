@@ -16,7 +16,7 @@ The site works even with no backend: designs fall back to `client/public/data/de
 ## Change business details in ONE place
 
 Open **`client/src/config/site.js`**: name, city, the three phone/WhatsApp numbers, Instagram, hours,
-teddy prices, machines, A-to-Z list, packages, FAQ, testimonials, event categories.
+teddy prices, machines, A-to-Z list, FAQ, testimonials, event categories.
 (Set `city` to your real location — it appears in the footer, contact page, map and Google description.)
 
 Optional frontend env vars (Vercel → Settings → Environment Variables):
@@ -40,19 +40,18 @@ Without JSONBin the server stores data in `server/data/*.json` (fine on your own
 ## Pages & features
 
 - **Services & Rentals** (`/services`) — DJ music setup, teddy dancers with 1/2/3-teddy prices, paper-spray/confetti & LED smoke machines, A-to-Z service list, vision & mission, booking buttons
-- **Home** — animated logo hero, services teaser, scrolling highlights, event categories, featured designs, why-us, how-it-works, packages, testimonials, FAQ, call-to-action
-- **Gallery** — instant category filter, search, ♥ saved designs (remembered in the browser), skeleton loading
-- **Design page** — photo viewer with full-screen lightbox, share / copy link, related designs, Call / WhatsApp / Instagram booking buttons
+- **Home** — animated logo hero, scrolling highlights, function tiles (cover photo + count), services teaser, why-us, how-it-works, testimonials, FAQ, call-to-action
+- **Gallery** (`/gallery`) — a tile for every function. **Touching a function opens `/gallery/wedding`, `/gallery/puberty-function`, `/gallery/engagement` …** with *all* photos of that function in one wall (tap a photo for full screen), plus order buttons
 - **Contact** — how-to-book buttons, location and Google map
-- **Ordering** — WhatsApp buttons for all three numbers (pre-filled with the chosen design), Instagram, and emergency Call buttons for numbers 2 and 3
-- **Admin site** (separate project in `admin/`, e.g. avd-spark-admin.vercel.app) — **Photos by function**: upload photos to Wedding, Birthday, Baby Shower, Puberty Function, Surprise Party, Engagement, DJ Setup, Teddy Dancers and Paper Spray; add more photos to an album, delete single photos, ⭐ feature albums on the home page, delete albums. Phone photos are shrunk before upload. Uploaded DJ / Teddy / Paper Spray photos appear automatically on the Services page.
+- **Ordering** — WhatsApp buttons for all three numbers (pre-filled with the function the visitor was viewing), Instagram, and emergency Call buttons for numbers 2 and 3
+- **Admin site** (separate project in `admin/`, e.g. avd-spark-admin.vercel.app) — **Photos by function**: upload photos to Wedding, Birthday, Baby Shower, Puberty Function, Surprise Party, Engagement, DJ Setup, Teddy Dancers and Paper Spray; add more photos, delete single photos, delete albums. Every photo you upload to a function automatically appears on that function's page. Phone photos are shrunk before upload. Uploaded DJ / Teddy / Paper Spray photos appear automatically on the Services page.
 - Floating WhatsApp button, back-to-top, mobile menu, SEO tags per page, link-preview (Open Graph) tags, `robots.txt`
 
 ## Security & performance notes
 
 - Admin tokens are signed and expire after 12 h (the password is never inside the token); no default password.
 - The admin login is rate-limited.
-- Admin code is lazy-loaded; React is split into its own cached chunk; designs are fetched once and shared by all pages;
+- The admin is a separate site (no admin code on the public website); photos are fetched once and shared by all pages;
   images are lazy-loaded; animations respect "reduce motion".
 
 ## Deploy (three small projects)
@@ -66,23 +65,3 @@ Without JSONBin the server stores data in `server/data/*.json` (fine on your own
 The admin site is hidden from Google (`noindex`) and is not linked from the public website — open its address directly and log in with `ADMIN_PASSWORD`.
 
 Admin and website share the function list: if you add a new function, add it in `client/src/config/site.js` **and** `admin/src/categories.js`.
-
-
-## Admin dashboard and photo uploads
-
-The separate admin frontend is in `admin/`. Deploy it as a second Vercel project:
-- Root Directory: `admin`
-- Framework: Vite
-- Build Command: `npm run build`
-- Output Directory: `dist`
-- Environment variable `VITE_API_URL`: the public URL of the deployed Express API
-- Environment variable `VITE_SITE_URL`: `https://avd-spark-decor.vercel.app`
-
-The Express API is in `server/` and must be deployed separately (for example, as a Node web service). Configure these backend environment variables on that host:
-- `ADMIN_PASSWORD` (strong private password for the owner login)
-- `ADMIN_SECRET` (long random signing secret)
-- `CLIENT_URL` (comma-separated customer-site and admin-site origins)
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (image hosting)
-- `JSONBIN_API_KEY`, `JSONBIN_BIN_ID` (persistent design metadata; create a JSONBin record containing `{"designs":[]}`)
-
-Do not put backend secrets in Vercel frontend environment variables or commit them to GitHub.

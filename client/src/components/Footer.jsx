@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { SITE, CATEGORIES } from '../config/site'
+import { SITE, FUNCTIONS } from '../config/site'
 import { WhatsAppIcon, InstagramIcon } from './BrandIcons'
 
 export default function Footer() {
@@ -18,8 +18,8 @@ export default function Footer() {
         <div>
           <h4>Events We Decorate</h4>
           <ul>
-            {CATEGORIES.map(c => (
-              <li key={c.name}><Link to={`/gallery?category=${encodeURIComponent(c.name)}`}>{c.name}</Link></li>
+            {FUNCTIONS.filter(f => !f.service).map(f => (
+              <li key={f.slug}><Link to={`/gallery/${f.slug}`}>{f.name}</Link></li>
             ))}
           </ul>
         </div>

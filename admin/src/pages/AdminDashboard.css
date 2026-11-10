@@ -189,3 +189,6 @@
 .action-btn.star.on { color: var(--gold-light); background: rgba(212,175,55,.15); }
 label.action-btn { cursor: pointer; }
 .admin-card-actions { flex-wrap: wrap; }
+
+.admin-card-info .design-category { color: var(--gold); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+.admin-card-info h4 { text-transform: capitalize; font-weight: 500; }

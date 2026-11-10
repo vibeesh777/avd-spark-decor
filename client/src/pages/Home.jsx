@@ -1,20 +1,16 @@
 import { Link } from 'react-router-dom'
-import useDesigns from '../hooks/useDesigns'
-import useFavorites from '../hooks/useFavorites'
+import usePhotos from '../hooks/usePhotos'
 import useMeta from '../hooks/useMeta'
 import useReveal from '../hooks/useReveal'
-import { WhatsAppIcon } from '../components/BrandIcons'
 import SectionHead from '../components/SectionHead'
-import DesignCard from '../components/DesignCard'
-import { SITE, waLink, CATEGORIES, FEATURE_SERVICES, HIGHLIGHTS, WHY_US, STEPS, PACKAGES, TESTIMONIALS, FAQ } from '../config/site'
+import FunctionCard from '../components/FunctionCard'
+import { WhatsAppIcon } from '../components/BrandIcons'
+import { SITE, waLink, FUNCTIONS, FEATURE_SERVICES, HIGHLIGHTS, WHY_US, STEPS, TESTIMONIALS, FAQ } from '../config/site'
 
 export default function Home() {
   useMeta()
-  const designs = useDesigns()
-  const fav = useFavorites()
-  useReveal(designs)
-
-  const featured = designs && [...designs].sort((a, b) => Number(!!b.featured) - Number(!!a.featured)).slice(0, 6)
+  const photos = usePhotos()
+  useReveal(photos)
 
   return (
     <>
@@ -23,13 +19,13 @@ export default function Home() {
         <div className="hero-glow" aria-hidden="true" />
         <div className="sparkles" aria-hidden="true">{Array.from({ length: 18 }, (_, i) => <i key={i} style={{ '--i': i }} />)}</div>
         <div className="hero-content">
-          <img src="/logo.png" alt={`${SITE.name} ${SITE.suffix}, ${SITE.city}`} className="hero-logo" width="640" height="427" fetchpriority="high" />
+          <img src="/logo.png" alt={`${SITE.name} ${SITE.suffix}, ${SITE.city}`} className="hero-logo" width="640" height="427" />
           <p className="hero-sub">
-            Crafting unforgettable memories through the art of decoration.<br />
-            Weddings · Birthdays · Baby Showers · Puberty Functions &amp; More
+            {SITE.tagline}<br />
+            Weddings · Birthdays · Baby Showers · Puberty Functions · DJ · Teddy Dancers
           </p>
           <div className="hero-actions">
-            <Link to="/gallery" className="btn-gold">Explore Designs</Link>
+            <Link to="/gallery" className="btn-gold">View Gallery</Link>
             <a href={waLink()} target="_blank" rel="noreferrer" className="btn-outline"><WhatsAppIcon size={18} /> Chat on WhatsApp</a>
           </div>
         </div>
@@ -43,19 +39,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* EVENTS */}
+      {/* FUNCTIONS — touch one to see all its photos */}
       <section className="section" id="events">
         <div className="container">
-          <SectionHead eyebrow="What we celebrate" title="Events We" accent="Decorate" />
-          <div className="cat-grid">
-            {CATEGORIES.map(c => (
-              <Link key={c.name} to={`/gallery?category=${encodeURIComponent(c.name)}`} className="cat-card reveal">
-                <span className="cat-icon">{c.icon}</span>
-                <h3>{c.name}</h3>
-                <p>{c.desc}</p>
-                <span className="cat-arrow">→</span>
-              </Link>
-            ))}
+          <SectionHead eyebrow="Touch a function to see all photos" title="Events We" accent="Decorate" />
+          <div className="fn-grid">
+            {FUNCTIONS.filter(f => !f.service).map(f => <FunctionCard key={f.slug} fn={f} photos={photos?.[f.name]} />)}
           </div>
         </div>
       </section>
@@ -73,23 +62,6 @@ export default function Home() {
               </Link>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* FEATURED */}
-      <section className="section">
-        <div className="container">
-          <SectionHead eyebrow="Portfolio highlights" title="Featured" accent="Designs" />
-          {!featured ? (
-            <div className="design-grid">{Array.from({ length: 3 }, (_, i) => <div key={i} className="skeleton" />)}</div>
-          ) : featured.length === 0 ? (
-            <div className="empty-state"><p>✨ Designs coming soon.</p><Link to="/contact" className="btn-outline">Contact Us</Link></div>
-          ) : (
-            <div className="design-grid">
-              {featured.map(d => <DesignCard key={d.id} design={d} favorite={fav.has(d.id)} onToggleFavorite={fav.toggle} />)}
-            </div>
-          )}
-          <div className="center mt"><Link to="/gallery" className="btn-outline">View Full Gallery →</Link></div>
         </div>
       </section>
 
@@ -125,27 +97,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PACKAGES */}
-      <section className="section">
-        <div className="container">
-          <SectionHead eyebrow="Decor packages" title="Choose Your" accent="Style"
-            sub="Every package is customised to your venue, theme and budget." />
-          <div className="pkg-grid">
-            {PACKAGES.map(p => (
-              <div key={p.name} className={`pkg-card reveal ${p.featured ? 'featured' : ''}`}>
-                <span className="pkg-tag">{p.tag}</span>
-                <h3>{p.name}</h3>
-                <ul>{p.items.map(i => <li key={i}>{i}</li>)}</ul>
-                <a href={waLink(`Hi! I'm interested in the ${p.name} decoration package.`)} target="_blank" rel="noreferrer"
-                  className={p.featured ? 'btn-gold' : 'btn-outline'}>Get a Quote</a>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* TESTIMONIALS */}
-      <section className="section alt">
+      <section className="section">
         <div className="container">
           <SectionHead eyebrow="What clients say" title="Happy" accent="Memories" />
           <div className="testi-grid">
@@ -161,7 +114,7 @@ export default function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="section">
+      <section className="section alt">
         <div className="container narrow">
           <SectionHead eyebrow="Good to know" title="Frequently Asked" accent="Questions" />
           <div className="faq reveal">
@@ -176,7 +129,7 @@ export default function Home() {
       <section className="cta-banner">
         <div className="container reveal">
           <h2>Ready to Create <span className="gold-text">Magic?</span></h2>
-          <p>Browse the gallery, pick your favourite design and place your order on WhatsApp or Instagram.<br />We’ll make your dream event a beautiful reality.</p>
+          <p>Browse the gallery, pick your favourite function and place your order on WhatsApp or Instagram.<br />We’ll make your dream event a beautiful reality.</p>
           <div className="hero-actions">
             <Link to="/gallery" className="btn-gold">Browse Gallery</Link>
             <a href={waLink()} target="_blank" rel="noreferrer" className="btn-outline"><WhatsAppIcon size={18} /> Order on WhatsApp</a>
