@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
-const { missing, explain, uploadBuffer } = require('../lib/cloud');
+const { missing, explain, uploadBuffer, removeByUrl } = require('../lib/cloud');
 const { verifyAdmin } = require('../middleware/auth');
 const store = require('../lib/store');
 
-const getDesigns = () => store.read('designs');
+const getDesigns = (fresh = false) => store.read('designs', { fresh });
 const saveDesigns = (designs) => store.write('designs', designs);
 
 const upload = multer({
@@ -39,7 +39,7 @@ const fail = (res, err, fallback) =>
 // GET all designs
 router.get('/', async (req, res) => {
   try {
-    const designs = await getDesigns();
+    const designs = await getDesigns(req.query.fresh === '1');   // the admin asks for the very latest list
     const { category } = req.query;
     const filtered = category && category !== 'All'
       ? designs.filter(d => d.category === category)
@@ -69,7 +69,7 @@ router.post('/', verifyAdmin, upload.array('images', 10), async (req, res) => {
     if (!title || !category) {
       return res.status(400).json({ success: false, message: 'Title and category required' });
     }
-    const designs = await getDesigns();          // check storage first, so a failure never leaves orphan uploads
+    const designs = await getDesigns(true);      // check storage first, so a failure never leaves orphan uploads
     const images = await uploadAll(req.files);
     const newDesign = {
       id: uuidv4(),
@@ -92,7 +92,7 @@ router.post('/', verifyAdmin, upload.array('images', 10), async (req, res) => {
 // PUT update design
 router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => {
   try {
-    const designs = await getDesigns();
+    const designs = await getDesigns(true);
     const idx = designs.findIndex(d => d.id === req.params.id);
     if (idx === -1) return res.status(404).json({ success: false, message: 'Design not found' });
     const { title, category, description, price, tags, featured, removeImages } = req.body;
@@ -110,6 +110,7 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
       updatedAt: new Date().toISOString()
     };
     await saveDesigns(designs);
+    await Promise.all(toRemove.map(removeByUrl));
     res.json({ success: true, design: designs[idx] });
   } catch (err) {
     fail(res, err, 'Could not update');
@@ -119,11 +120,12 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
 // DELETE design
 router.delete('/:id', verifyAdmin, async (req, res) => {
   try {
-    let designs = await getDesigns();
+    let designs = await getDesigns(true);
     const design = designs.find(d => d.id === req.params.id);
     if (!design) return res.status(404).json({ success: false, message: 'Design not found' });
     designs = designs.filter(d => d.id !== req.params.id);
     await saveDesigns(designs);
+    await Promise.all((design.images || []).map(removeByUrl));
     res.json({ success: true, message: 'Design deleted' });
   } catch (err) {
     fail(res, err, 'Could not delete');

@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [files, setFiles] = useState([])
   const [progress, setProgress] = useState(null)   // null = idle, 0–100 = uploading
   const [openId, setOpenId] = useState(null)       // album whose photos are being managed
+  const [editing, setEditing] = useState(null)       // album being edited in the pop-up
   const [problems, setProblems] = useState(null)   // server self-check: null = checking, [] = all good
 
   const headers = useMemo(() => ({ Authorization: `Bearer ${adminToken}` }), [adminToken])
@@ -51,14 +52,17 @@ export default function AdminDashboard() {
   useEffect(() => () => previews.forEach(URL.revokeObjectURL), [previews])
 
   const load = async () => {
-    try { setDesigns((await axios.get(`${API}/api/designs`)).data.designs || []) }
+    try { setDesigns((await axios.get(`${API}/api/designs?fresh=1`)).data.designs || []) }
     catch (e) { showToast(describe(e), 'error') }
     finally { setLoading(false) }
   }
   const checkServer = async () => {
     setProblems(null)
     try { setProblems((await axios.get(`${API}/api/admin/status`, { headers })).data.problems || []) }
-    catch (e) { setProblems([e.response?.status === 404 ? 'The server is out of date — redeploy the server with the latest code.' : describe(e)]) }
+    catch (e) {
+      if (e.response?.status === 401) { showToast(e.response.data?.message || 'Please log in again.', 'error'); logout(); navigate('/login'); return }
+      setProblems([e.response?.status === 404 ? 'The server is out of date — redeploy the server with the latest code.' : describe(e)])
+    }
   }
   useEffect(() => { if (!isAdmin) navigate('/login'); else { load(); checkServer() } }, [isAdmin])
 
@@ -122,8 +126,15 @@ export default function AdminDashboard() {
     const fd = new FormData(); fd.append('removeImages', JSON.stringify([url]))
     if (await send('put', `/${id}`, fd)) { showToast('Photo deleted'); load() }
   }
+  const openEdit = d => setEditing({ id: d.id, category: d.category, title: d.title || '', description: d.description || '', price: d.price || '' })
+  const saveEdit = async e => {
+    e.preventDefault()
+    const fd = new FormData()
+    ;['category', 'title', 'description', 'price'].forEach(k => fd.append(k, editing[k]))
+    if (await send('put', `/${editing.id}`, fd)) { showToast('Changes saved'); setEditing(null); load() }
+  }
   const removeAlbum = async d => {
-    if (!confirm(`Delete "${d.title}" and all its photos?`)) return
+    if (!confirm(`Delete "${d.title}" and all ${d.images?.length || 0} of its photos? This cannot be undone.`)) return
     if (await send('delete', `/${d.id}`)) { showToast('Deleted'); load() }
   }
 
@@ -153,7 +164,17 @@ export default function AdminDashboard() {
           <div className="alert-box" role="alert">
             <strong>⚠ Uploads won’t work until this is fixed</strong>
             <ul>{problems.map(p => <li key={p}>{p}</li>)}</ul>
-            <p>Fix it in your server’s environment settings, redeploy, then <button onClick={checkServer}>check again</button>.</p>
+            <details>
+              <summary>Show me how to fix it (about 5 minutes)</summary>
+              <ol>
+                <li>Go to <b>cloudinary.com</b>, sign up (free) and open your <b>Dashboard</b>. Copy the <b>Cloud name</b>, <b>API Key</b> and <b>API Secret</b>.</li>
+                <li>Open your <b>server's</b> hosting (for example Vercel → the API project → Settings → Environment Variables) and add three variables with exactly these names:
+                  <code>CLOUDINARY_CLOUD_NAME</code> <code>CLOUDINARY_API_KEY</code> <code>CLOUDINARY_API_SECRET</code></li>
+                <li><b>Redeploy</b> the server (Vercel → Deployments → ⋯ → Redeploy). New settings only work after a redeploy.</li>
+                <li>Come back here and press <b>check again</b>. That is all — Cloudinary alone stores both the photos and the photo list.</li>
+              </ol>
+            </details>
+            <p><button onClick={checkServer}>Check again</button></p>
           </div>
         )}
         <div className="stats-row">
@@ -228,6 +249,7 @@ export default function AdminDashboard() {
                   </div>
                   {openId === d.id && (
                     <div className="manage-grid">
+                      <p className="manage-hint">Tap ✕ on a photo to delete it</p>
                       {(d.images || []).map(u => (
                         <div key={u} className="thumb"><img src={u} alt="" loading="lazy" /><button title="Delete photo" onClick={() => removePhoto(d.id, u)}>✕</button></div>
                       ))}
@@ -238,6 +260,7 @@ export default function AdminDashboard() {
                       <input type="file" multiple accept="image/*" hidden onChange={e => { addPhotos(d.id, e.target.files); e.target.value = '' }} />
                     </label>
                     <button className="action-btn view" onClick={() => setOpenId(openId === d.id ? null : d.id)}>{openId === d.id ? 'Done' : 'Manage'}</button>
+                    <button className="action-btn view" onClick={() => openEdit(d)}>Edit</button>
                     <a href={`${SITE_URL}/gallery/${slugify(d.category)}`} target="_blank" rel="noreferrer" className="action-btn view">View</a>
                     <button className="action-btn delete" onClick={() => removeAlbum(d)}>Delete</button>
                   </div>
@@ -247,6 +270,27 @@ export default function AdminDashboard() {
           )}
         </div>
       </main>
+
+      {editing && (
+        <div className="modal-backdrop" onClick={() => setEditing(null)}>
+          <form className="modal" onClick={e => e.stopPropagation()} onSubmit={saveEdit}>
+            <h3>Edit album</h3>
+            <div className="form-field">
+              <label>Function (move this album to another function)</label>
+              <select value={editing.category} onChange={e => setEditing({ ...editing, category: e.target.value })}>
+                {ALL_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="form-field"><label>Album name</label><input value={editing.title} onChange={e => setEditing({ ...editing, title: e.target.value })} /></div>
+            <div className="form-field"><label>Price</label><input value={editing.price} onChange={e => setEditing({ ...editing, price: e.target.value })} /></div>
+            <div className="form-field"><label>Description</label><input value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} /></div>
+            <div className="modal-actions">
+              <button type="button" className="btn-outline" onClick={() => setEditing(null)}>Cancel</button>
+              <button type="submit" className="btn-gold">Save changes</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

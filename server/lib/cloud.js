@@ -1,5 +1,6 @@
 // Cloudinary (photo storage) — config + helpers that explain problems in plain words.
 const cloudinary = require('cloudinary').v2;
+const axios = require('axios');
 
 // Hosting dashboards often keep stray spaces or quotes around values — strip them.
 const clean = (v) => String(v ?? '').trim().replace(/^["']|["']$/g, '');
@@ -34,4 +35,39 @@ const uploadBuffer = (buffer) =>
 
 const ping = () => cloudinary.api.ping();
 
-module.exports = { missing, explain, uploadBuffer, ping };
+/** Delete a photo from Cloudinary (best effort — a failure never blocks the admin). */
+const removeByUrl = async (url) => {
+  const m = /\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i.exec(String(url || ''));
+  if (!m || !/res\.cloudinary\.com/.test(url) || missing().length) return;
+  try { await cloudinary.uploader.destroy(m[1], { invalidate: true }); }
+  catch (e) { console.error('Could not delete from Cloudinary:', e.message); }
+};
+
+// ── The photo list lives in Cloudinary too (one small JSON file), so no second service is needed ──
+const DATA_ID = 'avd-spark-decor/data/designs.json';   // raw files keep their extension in the id
+
+/** Returns the saved object, or null if it has not been created yet. */
+const readJson = async () => {
+  let info;
+  try {
+    info = await cloudinary.api.resource(DATA_ID, { resource_type: 'raw' });
+  } catch (e) {
+    const code = e.http_code || e.error?.http_code;
+    if (code === 404 || /not found/i.test(e.message || e.error?.message || '')) return null;
+    throw e;
+  }
+  // secure_url contains the version number, so it is never a stale cached copy
+  const { data } = await axios.get(info.secure_url, { responseType: 'text', transformResponse: (x) => x });
+  return JSON.parse(data);
+};
+
+const writeJson = (obj) =>
+  new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream({ resource_type: 'raw', public_id: DATA_ID, overwrite: true, invalidate: true },
+        (error, result) => (error ? reject(error) : resolve(result)))
+      .end(Buffer.from(JSON.stringify(obj)));
+  });
+
+module.exports = {
+  readJson, writeJson, missing, explain, uploadBuffer, ping, removeByUrl };

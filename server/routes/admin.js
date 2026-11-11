@@ -19,17 +19,17 @@ router.get('/status', verifyAdmin, async (req, res) => {
   const problems = [];
 
   const gaps = cloud.missing();
+  let cloudOk = false;
   if (gaps.length) {
     problems.push(`Photo storage (Cloudinary) is not set up — missing ${gaps.join(', ')}.`);
   } else {
-    try { await cloud.ping(); }
+    try { await cloud.ping(); cloudOk = true; }
     catch (e) { problems.push(`Cloudinary refused the connection: ${cloud.explain(e)}`); }
   }
 
-  if (process.env.VERCEL === '1' && !store.usesBin('designs')) {
-    problems.push('JSONBin is not set up (JSONBIN_API_KEY, JSONBIN_BIN_ID) — photos cannot be saved on this host.');
-  } else {
-    try { await store.read('designs'); }
+  // Only check the photo list once Cloudinary itself is sorted (otherwise the message above already says what to do)
+  if (cloudOk || store.mode('designs') === 'jsonbin') {
+    try { await store.ensure('designs'); }
     catch (e) { problems.push(`Saving the photo list failed: ${e.message}`); }
   }
 

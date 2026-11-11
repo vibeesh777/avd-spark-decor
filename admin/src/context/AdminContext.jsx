@@ -1,18 +1,23 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 
+// New key on purpose: the old website stored a different kind of token under 'avd_admin_token',
+// and an old token on the same address would be rejected by the server ("Unauthorized").
+const TOKEN_KEY = 'avd_admin_session'
+try { localStorage.removeItem('avd_admin_token') } catch { /* private mode */ }
+
 const AdminContext = createContext(null)
 const ToastContext = createContext(null)
 
 export function AdminProvider({ children }) {
-  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('avd_admin_token'))
+  const [adminToken, setAdminToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [toast, setToast] = useState(null)
 
   const login = (token) => {
-    localStorage.setItem('avd_admin_token', token)
+    localStorage.setItem(TOKEN_KEY, token)
     setAdminToken(token)
   }
   const logout = () => {
-    localStorage.removeItem('avd_admin_token')
+    localStorage.removeItem(TOKEN_KEY)
     setAdminToken(null)
   }
 

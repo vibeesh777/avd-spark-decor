@@ -32,10 +32,10 @@ Optional frontend env vars (Vercel → Settings → Environment Variables):
 |---|---|
 | `ADMIN_PASSWORD` | **Required.** Admin login is disabled until it is set. Use a long unique password. |
 | `CLIENT_URL` | Your site URL(s), comma-separated (CORS). |
-| `CLOUDINARY_*` | Image uploads. |
-| `JSONBIN_API_KEY`, `JSONBIN_BIN_ID` | Storage for designs (needed on Vercel). Create one bin starting as `{"designs":[]}`. |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | **The only account you need** — stores the photos *and* the photo list. See **SETUP-GUIDE.md**. |
+| `JSONBIN_API_KEY`, `JSONBIN_BIN_ID` | *Optional / older setups.* Not needed any more. |
 
-Without JSONBin the server stores data in `server/data/*.json` (fine on your own PC/VPS, not on Vercel).
+With no Cloudinary or JSONBin set up, the server saves to `server/data/*.json` (fine on your own PC/VPS, not on Vercel).
 
 ## Pages & features
 
@@ -68,14 +68,20 @@ Admin and website share the function list: if you add a new function, add it in 
 
 ## Troubleshooting photo uploads
 
+**Start with `SETUP-GUIDE.md`** — a 5-minute, step-by-step guide.
+
 Open the admin site: a **server check** appears at the top of the dashboard. It is green when uploads are ready, or it lists exactly what is wrong. Typical fixes:
 
 | Message | Fix |
 |---|---|
 | *Cloudinary is not set up — missing …* | Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` to the **server's** environment settings (cloudinary.com → Dashboard), then redeploy |
 | *cloud name / API key / API secret is wrong* | Re-copy that value from the Cloudinary dashboard (no quotes, no spaces) |
-| *JSONBin rejected the key / bin not found / empty* | Use the **Master Key** as `JSONBIN_API_KEY`; `JSONBIN_BIN_ID` is the bin's id; the bin must contain `{"designs": []}` |
+| *Saving the photo list failed … Cloudinary* | Your Cloudinary account refused saving a small file — check the API key/secret, or contact Cloudinary support |
+| *JSONBin rejected the key / bin not found / empty* | Only if you chose JSONBin: use the **Master Key** as `JSONBIN_API_KEY`; the bin must contain `{"designs": []}`. Or delete the JSONBin settings and use Cloudinary alone |
+| *Unauthorized / “please log in again”* | Your saved login is old or expired — you are sent to the login page automatically; log in with `ADMIN_PASSWORD`. If it keeps happening, make sure `ADMIN_PASSWORD` is set on the server and the server was redeployed |
 | *Can't reach the server* | `VITE_API_URL` on the admin site must be the API address, and `CLIENT_URL` on the server must include the admin site's address |
 | *Server is out of date* | Redeploy the `server/` folder from this project |
+
+Each album has **+ Photos**, **Manage** (delete single photos), **Edit** (rename, change price/description, or move it to another function) and **Delete** (also removes the photos from Cloudinary to free space).
 
 Environment changes only take effect after the server is redeployed/restarted. Large photo sets are sent in small batches automatically, so hosting size limits are not a problem.

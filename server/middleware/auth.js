@@ -18,18 +18,27 @@ const issueToken = () => {
 };
 
 const verifyAdmin = (req, res, next) => {
+  const refuse = (message) => res.status(401).json({ success: false, message });
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return refuse('Please log in again.');
+  if (!secret()) return refuse('Admin login is not configured on the server (ADMIN_PASSWORD).');
+
   const [payload, sig] = token.split('.');
   try {
-    if (secret() && payload && sig) {
-      const expected = Buffer.from(sign(payload));
-      const given = Buffer.from(sig);
-      const valid = expected.length === given.length && crypto.timingSafeEqual(expected, given);
-      if (valid && JSON.parse(Buffer.from(payload, 'base64url').toString()).exp > Date.now()) return next();
+    if (!payload || !sig) return refuse('Your login is from an older version — please log in again.');
+    const expected = Buffer.from(sign(payload));
+    const given = Buffer.from(sig);
+    if (expected.length !== given.length || !crypto.timingSafeEqual(expected, given)) {
+      return refuse('Your login is no longer valid (the server password changed) — please log in again.');
     }
-  } catch { /* fall through */ }
-  return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (JSON.parse(Buffer.from(payload, 'base64url').toString()).exp <= Date.now()) {
+      return refuse('Your login has expired — please log in again.');
+    }
+    return next();
+  } catch {
+    return refuse('Your login is from an older version — please log in again.');
+  }
 };
 
 module.exports = { verifyAdmin, passwordOk, issueToken };
