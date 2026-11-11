@@ -9,6 +9,27 @@ import './AdminDashboard.css'
 
 const EMPTY = { category: '', title: '', description: '', price: '' }
 const MAX_FILES = 10
+const BATCH_BYTES = 3.2 * 1024 * 1024   // stay under typical host request limits (Vercel: 4.5 MB)
+
+/** Say what actually went wrong, not just "something went wrong". */
+const describe = e => {
+  if (!e.response) return "Can't reach the server. Check VITE_API_URL on this admin site, and that CLIENT_URL on the server includes this admin site's address."
+  const { status, data } = e.response
+  if (data?.message) return data.message
+  if (status === 413) return 'The photos are too large to send together — try fewer photos at a time.'
+  if (status === 404) return 'Server address not found — make sure VITE_API_URL points to the API, not the website.'
+  return `Server error (${status}). Please try again.`
+}
+
+/** Split photos into groups that fit in one request. */
+const toBatches = list => {
+  const out = [[]]; let size = 0
+  for (const f of list) {
+    if (size + f.size > BATCH_BYTES && out.at(-1).length) { out.push([]); size = 0 }
+    out.at(-1).push(f); size += f.size
+  }
+  return out
+}
 
 export default function AdminDashboard() {
   const { adminToken, logout, isAdmin } = useAdmin()
@@ -23,6 +44,7 @@ export default function AdminDashboard() {
   const [files, setFiles] = useState([])
   const [progress, setProgress] = useState(null)   // null = idle, 0–100 = uploading
   const [openId, setOpenId] = useState(null)       // album whose photos are being managed
+  const [problems, setProblems] = useState(null)   // server self-check: null = checking, [] = all good
 
   const headers = useMemo(() => ({ Authorization: `Bearer ${adminToken}` }), [adminToken])
   const previews = useMemo(() => files.map(f => URL.createObjectURL(f)), [files])
@@ -30,10 +52,15 @@ export default function AdminDashboard() {
 
   const load = async () => {
     try { setDesigns((await axios.get(`${API}/api/designs`)).data.designs || []) }
-    catch { showToast('Failed to load photos', 'error') }
+    catch (e) { showToast(describe(e), 'error') }
     finally { setLoading(false) }
   }
-  useEffect(() => { if (!isAdmin) navigate('/login'); else load() }, [isAdmin])
+  const checkServer = async () => {
+    setProblems(null)
+    try { setProblems((await axios.get(`${API}/api/admin/status`, { headers })).data.problems || []) }
+    catch (e) { setProblems([e.response?.status === 404 ? 'The server is out of date — redeploy the server with the latest code.' : describe(e)]) }
+  }
+  useEffect(() => { if (!isAdmin) navigate('/login'); else { load(); checkServer() } }, [isAdmin])
 
   /** One place for every admin request: handles expired logins and errors. */
   const send = async (method, path, data, onUploadProgress) => {
@@ -41,7 +68,7 @@ export default function AdminDashboard() {
       return (await axios({ method, url: `${API}/api/designs${path}`, data, headers, onUploadProgress })).data
     } catch (e) {
       if (e.response?.status === 401) { showToast('Session expired — please log in again', 'error'); logout(); navigate('/login') }
-      else showToast(e.response?.data?.message || 'Something went wrong', 'error')
+      else showToast(describe(e), 'error')
       return null
     }
   }
@@ -52,28 +79,43 @@ export default function AdminDashboard() {
     setFiles(list.slice(0, MAX_FILES))
   }
 
+  /** Sends photos in small batches: the first creates the album, the rest are added to it. */
+  const sendBatches = async (list, { albumId, fields }) => {
+    const shrunk = []
+    for (const f of list) shrunk.push(await shrink(f))
+    const batches = toBatches(shrunk)
+    let id = albumId
+    for (let i = 0; i < batches.length; i++) {
+      const fd = new FormData()
+      if (!id) Object.entries(fields).forEach(([k, v]) => v && fd.append(k, v))
+      batches[i].forEach(f => fd.append('images', f))
+      const onProgress = ev => setProgress(Math.round(((i + ev.loaded / (ev.total || 1)) / batches.length) * 100))
+      const res = id ? await send('put', `/${id}`, fd, onProgress) : await send('post', '', fd, onProgress)
+      if (!res) return { ok: false, done: i }
+      id = id || res.design?.id
+    }
+    return { ok: true, done: batches.length }
+  }
+
   const upload = async e => {
     e.preventDefault()
     if (!form.category) return showToast('Choose a function first', 'error')
     if (!files.length) return showToast('Choose at least one photo', 'error')
     setProgress(0)
-    const fd = new FormData()
-    fd.append('category', form.category)
-    fd.append('title', form.title.trim() || form.category)
-    if (form.description) fd.append('description', form.description)
-    if (form.price) fd.append('price', form.price)
-    for (const f of files) fd.append('images', await shrink(f))
-    const res = await send('post', '', fd, ev => setProgress(Math.round((ev.loaded * 100) / (ev.total || 1))))
+    const r = await sendBatches(files, { fields: { category: form.category, title: form.title.trim() || form.category, description: form.description, price: form.price } })
     setProgress(null)
-    if (res) { showToast('Photos uploaded!'); setForm(EMPTY); setFiles([]); setShowForm(false); setCat(form.category); load() }
+    if (r.ok) { showToast('Photos uploaded!'); setForm(EMPTY); setFiles([]); setShowForm(false); setCat(form.category) }
+    else if (r.done > 0) showToast('Only some photos were uploaded — see the message above and try the rest again', 'error')
+    load()
   }
 
   const addPhotos = async (id, list) => {
     if (!list.length) return
-    const fd = new FormData()
-    for (const f of Array.from(list).slice(0, MAX_FILES)) fd.append('images', await shrink(f))
-    showToast('Uploading…')
-    if (await send('put', `/${id}`, fd)) { showToast('Photos added'); load() }
+    setProgress(0)
+    const r = await sendBatches(Array.from(list).slice(0, MAX_FILES), { albumId: id })
+    setProgress(null)
+    if (r.ok) showToast('Photos added')
+    load()
   }
   const removePhoto = async (id, url) => {
     if (!confirm('Delete this photo?')) return
@@ -105,6 +147,15 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="admin-main">
+        {problems === null && <div className="ok-box">Checking the server…</div>}
+        {problems?.length === 0 && <div className="ok-box good">✓ Server check passed — photo uploads are ready.</div>}
+        {problems?.length > 0 && (
+          <div className="alert-box" role="alert">
+            <strong>⚠ Uploads won’t work until this is fixed</strong>
+            <ul>{problems.map(p => <li key={p}>{p}</li>)}</ul>
+            <p>Fix it in your server’s environment settings, redeploy, then <button onClick={checkServer}>check again</button>.</p>
+          </div>
+        )}
         <div className="stats-row">
           {stats.map(s => (
             <div key={s.label} className="stat-card">

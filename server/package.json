@@ -20,5 +20,8 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "allowScripts": {
+    "core-js@3.51.0": true
   }
 }

@@ -12,6 +12,15 @@ const binId = (name) => (name === 'designs' ? process.env.JSONBIN_BIN_ID : undef
 const useBin = (name) => Boolean(process.env.JSONBIN_API_KEY && binId(name));
 const binUrl = (name) => `https://api.jsonbin.io/v3/b/${binId(name)}`;
 const headers = () => ({ 'X-Master-Key': process.env.JSONBIN_API_KEY, 'Content-Type': 'application/json' });
+/** Plain-words explanation of a JSONBin failure. */
+const binProblem = (e) => {
+  const status = e.response?.status;
+  if (status === 401 || status === 403) return 'JSONBin rejected the key — check JSONBIN_API_KEY (use the Master Key).';
+  if (status === 404) return 'JSONBin bin not found — check JSONBIN_BIN_ID.';
+  if (status === 400 || status === 422) return 'JSONBin bin is empty or invalid — it must contain {"designs": []}.';
+  if (!e.response) return 'the server cannot reach JSONBin (network problem).';
+  return `JSONBin error (${status}).`;
+};
 const file = (name) => path.join(__dirname, '../data', `${name}.json`);
 
 async function read(name) {
@@ -20,8 +29,10 @@ async function read(name) {
 
   let list;
   if (useBin(name)) {
-    const { data } = await axios.get(`${binUrl(name)}/latest`, { headers: headers() });
-    list = data.record?.[name] || [];
+    try {
+      const { data } = await axios.get(`${binUrl(name)}/latest`, { headers: headers() });
+      list = data.record?.[name] || [];
+    } catch (e) { throw new Error(binProblem(e)); }
   } else {
     list = await fs.readJson(file(name)).then((d) => d[name] || []).catch(() => []);
   }
@@ -31,7 +42,9 @@ async function read(name) {
 
 async function write(name, list) {
   if (useBin(name)) {
-    await axios.put(binUrl(name), { [name]: list }, { headers: headers() });
+    try {
+      await axios.put(binUrl(name), { [name]: list }, { headers: headers() });
+    } catch (e) { throw new Error(binProblem(e)); }
   } else if (process.env.VERCEL === '1') {
     throw new Error(`No storage configured for "${name}". Set JSONBIN_API_KEY and the matching bin id.`);
   } else {
@@ -40,4 +53,4 @@ async function write(name, list) {
   cache[name] = { list, at: Date.now() };
 }
 
-module.exports = { read, write };
+module.exports = { read, write, usesBin: useBin };

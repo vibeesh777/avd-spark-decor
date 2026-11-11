@@ -192,3 +192,13 @@ label.action-btn { cursor: pointer; }
 
 .admin-card-info .design-category { color: var(--gold); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
 .admin-card-info h4 { text-transform: capitalize; font-weight: 500; }
+
+/* ── server self-check banner ── */
+.alert-box { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.45); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; color: #fecaca; }
+.alert-box strong { display: block; margin-bottom: 6px; color: #f87171; }
+.alert-box ul { margin: 6px 0 10px 18px; list-style: disc; }
+.alert-box li { margin: 4px 0; }
+.alert-box p { font-size: 14px; color: var(--white-muted); }
+.alert-box button { background: none; border: 0; color: var(--gold); text-decoration: underline; font-size: inherit; padding: 0; }
+.ok-box { font-size: 13px; color: var(--white-muted); margin-bottom: 14px; }
+.ok-box.good { color: #4ade80; }

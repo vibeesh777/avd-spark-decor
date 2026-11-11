@@ -2,15 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
-const cloudinary = require('cloudinary').v2;
-
-// Configure image hosting from the backend environment variables.
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-});
+const { missing, explain, uploadBuffer } = require('../lib/cloud');
 const { verifyAdmin } = require('../middleware/auth');
 const store = require('../lib/store');
 
@@ -26,17 +18,23 @@ const upload = multer({
   }
 });
 
-const uploadToCloudinary = (buffer) => {
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      { folder: 'avd-spark-decor' },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result.secure_url);
-      }
-    ).end(buffer);
-  });
+/** Upload files to Cloudinary, or throw an error that says what to fix. */
+const uploadAll = async (files = []) => {
+  if (!files.length) return [];
+  const gaps = missing();
+  if (gaps.length) {
+    const e = new Error(`Photo storage (Cloudinary) is not set up on the server — missing ${gaps.join(', ')}.`);
+    e.status = 503; throw e;
+  }
+  try {
+    return await Promise.all(files.map((f) => uploadBuffer(f.buffer)));
+  } catch (err) {
+    const e = new Error(`Photo upload failed: ${explain(err)}`);
+    e.status = 502; throw e;
+  }
 };
+const fail = (res, err, fallback) =>
+  res.status(err.status || 500).json({ success: false, message: err.status ? err.message : `${fallback}: ${err.message}` });
 
 // GET all designs
 router.get('/', async (req, res) => {
@@ -71,7 +69,8 @@ router.post('/', verifyAdmin, upload.array('images', 10), async (req, res) => {
     if (!title || !category) {
       return res.status(400).json({ success: false, message: 'Title and category required' });
     }
-    const images = await Promise.all((req.files || []).map(f => uploadToCloudinary(f.buffer)));
+    const designs = await getDesigns();          // check storage first, so a failure never leaves orphan uploads
+    const images = await uploadAll(req.files);
     const newDesign = {
       id: uuidv4(),
       title, category,
@@ -82,12 +81,11 @@ router.post('/', verifyAdmin, upload.array('images', 10), async (req, res) => {
       featured: false,
       createdAt: new Date().toISOString()
     };
-    const designs = await getDesigns();
     designs.unshift(newDesign);
     await saveDesigns(designs);
     res.status(201).json({ success: true, design: newDesign });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    fail(res, err, 'Could not save');
   }
 });
 
@@ -99,7 +97,7 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
     if (idx === -1) return res.status(404).json({ success: false, message: 'Design not found' });
     const { title, category, description, price, tags, featured, removeImages } = req.body;
     const toRemove = removeImages ? JSON.parse(removeImages) : [];
-    const newImages = await Promise.all((req.files || []).map(f => uploadToCloudinary(f.buffer)));
+    const newImages = await uploadAll(req.files);
     designs[idx] = {
       ...designs[idx],
       title: title || designs[idx].title,
@@ -114,7 +112,7 @@ router.put('/:id', verifyAdmin, upload.array('images', 10), async (req, res) => 
     await saveDesigns(designs);
     res.json({ success: true, design: designs[idx] });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    fail(res, err, 'Could not update');
   }
 });
 
@@ -128,8 +126,17 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
     await saveDesigns(designs);
     res.json({ success: true, message: 'Design deleted' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    fail(res, err, 'Could not delete');
   }
+});
+
+// Friendly messages for upload problems raised by multer
+router.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+  const msg = {
+    LIMIT_FILE_SIZE: 'A photo is larger than 10 MB.',
+    LIMIT_UNEXPECTED_FILE: 'Too many photos at once (maximum 10).',
+  }[err.code] || err.message;
+  res.status(err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ success: false, message: msg });
 });
 
 module.exports = router;

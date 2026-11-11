@@ -65,3 +65,17 @@ Without JSONBin the server stores data in `server/data/*.json` (fine on your own
 The admin site is hidden from Google (`noindex`) and is not linked from the public website — open its address directly and log in with `ADMIN_PASSWORD`.
 
 Admin and website share the function list: if you add a new function, add it in `client/src/config/site.js` **and** `admin/src/categories.js`.
+
+## Troubleshooting photo uploads
+
+Open the admin site: a **server check** appears at the top of the dashboard. It is green when uploads are ready, or it lists exactly what is wrong. Typical fixes:
+
+| Message | Fix |
+|---|---|
+| *Cloudinary is not set up — missing …* | Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` to the **server's** environment settings (cloudinary.com → Dashboard), then redeploy |
+| *cloud name / API key / API secret is wrong* | Re-copy that value from the Cloudinary dashboard (no quotes, no spaces) |
+| *JSONBin rejected the key / bin not found / empty* | Use the **Master Key** as `JSONBIN_API_KEY`; `JSONBIN_BIN_ID` is the bin's id; the bin must contain `{"designs": []}` |
+| *Can't reach the server* | `VITE_API_URL` on the admin site must be the API address, and `CLIENT_URL` on the server must include the admin site's address |
+| *Server is out of date* | Redeploy the `server/` folder from this project |
+
+Environment changes only take effect after the server is redeployed/restarted. Large photo sets are sent in small batches automatically, so hosting size limits are not a problem.
